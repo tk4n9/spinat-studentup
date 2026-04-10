@@ -8,7 +8,7 @@ This file tracks the history of changes, decisions, and current status for all p
 
 | Program | Directory | Status |
 |---|---|---|
-| Program A: 릴스 Booth & 모니터 영상전시 툴 | `program-a-reels-booth/` | 🟡 Planning |
+| Program A: 릴스 Booth & 모니터 영상전시 툴 | `program-a-reels-booth/` | 🟢 Complete (awaiting user config) |
 | Program B: TBD | TBD | ⬜ Not started |
 
 ---
@@ -107,13 +107,82 @@ frontend/
 - ✅ Vite build: clean, 66 modules, 211KB JS bundle
 - ✅ Backend smoke test: `import main` passes
 
-**Status:** Implementation complete. Ready for venue testing.
+**Status:** Dependencies installed, build passing.
 
-**Remaining before production-ready:**
-- [ ] User provides 4 video format specs → update `backend/config.yaml`
-- [ ] User creates Cloudflare R2 bucket → fills `backend/.env` from `.env.example`
+---
+
+### 2026-04-11 — Program A: Backend API Full Test + Socket Fix
+
+**User Prompt:** (continuation of implementation)
+
+**Actions Taken:**
+- Fixed `main.py` startup hang: `socket.connect("8.8.8.8", 80)` blocked without timeout. Added `s.settimeout(2)` to `_get_local_ip()`.
+- Started backend server and tested all API endpoints via curl:
+
+| Endpoint | Method | Result |
+|---|---|---|
+| `/api/session/counter` | GET | `{"count":0}` ✅ |
+| `/api/session/counter/increment` | POST | `{"count":1}` ✅ |
+| `/api/session/formats` | GET | 4 formats array ✅ |
+| `/api/videos/upload` | POST (multipart) | Returns `{id, format_id}` ✅ |
+| `/api/videos/{id}/finalize` (both=true) | POST | Video → display/ + instagram/ ✅ |
+| `/api/videos/{id}/finalize` (save only) | POST | Video → display/ only ✅ |
+| `/api/videos/{id}/finalize` (insta only) | POST | Video → instagram/ only ✅ |
+| `/api/videos/{id}/finalize` (neither) | POST | Video discarded ✅ |
+| `/api/videos/display` | GET | Correct playlist ✅ |
+| `/api/videos/{id}/qr.png` (no R2) | GET | 404 with clear message ✅ |
+
+**Commit:** `8a7bd19` — `fix(backend): add socket timeout to prevent startup hang`
+
+---
+
+### 2026-04-11 — Program A: README + Type Declarations
+
+**Actions Taken:**
+- Created `program-a-reels-booth/README.md` — concise setup guide (backend venv, frontend build, dev mode, venue deployment)
+- Created `frontend/src/vite-env.d.ts` — Vite client types + `fix-webm-duration` module declaration (no @types package available)
+
+**Commit:** `b19f4c3` — `chore(program-a): add README, type declarations, and vite-env.d.ts`
+
+---
+
+### 2026-04-11 — Program A: Architect Review + Fixes
+
+**Architect verification result: PASS**
+
+3 issues identified, 2 fixed:
+
+| # | Issue | Severity | Action |
+|---|---|---|---|
+| 1 | `r2.py`: sync boto3 I/O inside `async def` blocks event loop | Non-blocking | **Fixed** — wrapped in `asyncio.to_thread()` |
+| 2 | `usePlaylist.ts`: stale `videos.length` closure in `advance()` | Non-blocking | **Fixed** — use `useRef` for current videos array |
+| 3 | `_registry` dict is in-memory only, lost on server restart | Non-blocking | **Accepted** — appropriate for single-session exhibition booth |
+
+**Architect confirmed all PRD requirements are implemented:**
+- State machine (6 screens), challenger counter, format selector
+- All 4 finalize paths, WebSocket monitor sync
+- Web Audio API mixing matches PRD spec exactly
+- Samsung Galaxy Tab audio fix, Wake Lock with visibilitychange re-acquire
+- Codec detection (runtime `isTypeSupported()`), fix-webm-duration
+- Kiosk back-button block
+
+**Commit:** `1f355cd` — `fix: address architect review findings`
+
+---
+
+### Current Status (2026-04-11)
+
+**Program A: 🟢 Implementation complete.**
+
+All code written, tested, and architect-verified. 4 commits on `main`.
+
+**Remaining (user action required):**
+- [ ] Provide 4 video format specs → update `backend/config.yaml` (duration, music file per format)
+- [ ] Create Cloudflare R2 bucket → fill `backend/.env` from `.env.example`
 - [ ] Add music files to `backend/storage/music/` if formats require them
-- [ ] Test on actual Galaxy Pad + monitor PC setup
+- [ ] Test on actual Galaxy Pad + monitor PC at venue
+
+**Program B: ⬜ Not started — specs not yet provided.**
 
 ---
 
