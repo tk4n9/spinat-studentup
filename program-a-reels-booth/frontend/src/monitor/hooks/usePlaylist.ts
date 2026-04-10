@@ -48,9 +48,15 @@ export function usePlaylist() {
     };
   }, [connectWs]);
 
+  const videosRef = useRef(videos);
+  videosRef.current = videos;
+
   const advance = useCallback(() => {
-    setIndex((prev) => (videos.length > 0 ? (prev + 1) % videos.length : 0));
-  }, [videos.length]);
+    setIndex((prev) => {
+      const len = videosRef.current.length;
+      return len > 0 ? (prev + 1) % len : 0;
+    });
+  }, []);
 
   const current = videos[index] ?? null;
 

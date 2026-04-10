@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from pathlib import Path
 import boto3
@@ -29,6 +30,18 @@ def is_configured() -> bool:
     return bool(R2_ACCOUNT_ID and R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY)
 
 
+def _sync_upload(file_path: Path, key: str) -> None:
+    """Blocking upload — run via asyncio.to_thread to avoid blocking the event loop."""
+    client = _get_client()
+    with open(file_path, "rb") as f:
+        client.put_object(
+            Bucket=R2_BUCKET_NAME,
+            Key=key,
+            Body=f,
+            ContentType="video/webm",
+        )
+
+
 async def upload_video(file_path: Path, video_id: str) -> str:
     """
     Upload video to R2. Returns the public download URL.
@@ -40,14 +53,7 @@ async def upload_video(file_path: Path, video_id: str) -> str:
     key = f"videos/{video_id}{file_path.suffix}"
 
     try:
-        client = _get_client()
-        with open(file_path, "rb") as f:
-            client.put_object(
-                Bucket=R2_BUCKET_NAME,
-                Key=key,
-                Body=f,
-                ContentType="video/webm",
-            )
+        await asyncio.to_thread(_sync_upload, file_path, key)
         logger.info(f"Uploaded {file_path.name} to R2 as {key}")
     except ClientError as e:
         logger.error(f"R2 upload failed for {video_id}: {e}")
