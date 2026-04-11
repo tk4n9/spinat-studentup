@@ -18,10 +18,13 @@
 
 ## Backend
 
+**venv naming:** Use `.venv_tk` when current user is `tk`. Use `.venv` when current user is `gtpv`.
+
 ```bash
 cd program-a-reels-booth/backend
-.venv/bin/python -m pytest tests/ -q   # tests
-.venv/bin/python -c "import main"       # smoke test
+.venv_tk/bin/python -m pytest tests/ -q   # tests (user: tk)
+.venv_tk/bin/python -c "import main"       # smoke test (user: tk)
+# .venv/bin/python ...                     # (user: gtpv)
 ```
 
 ## Frontend

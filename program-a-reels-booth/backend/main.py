@@ -2,6 +2,7 @@ import logging
 import socket
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from config import FRONTEND_DIST, DISPLAY_PATH, MUSIC_PATH
@@ -31,8 +32,15 @@ app.mount("/videos/display", StaticFiles(directory=str(DISPLAY_PATH)), name="dis
 # Serve music tracks to the Galaxy Pad browser (for Web Audio API)
 app.mount("/music", StaticFiles(directory=str(MUSIC_PATH)), name="music")
 
-# Serve built React frontend (production)
+# ── SPA fallback: serve index.html for client-side routes ─────
 if FRONTEND_DIST.exists():
+    _index_path = FRONTEND_DIST / "index.html"
+
+    @app.get("/pad", include_in_schema=False)
+    @app.get("/monitor", include_in_schema=False)
+    async def _spa_fallback():
+        return FileResponse(_index_path)
+
     app.mount("/", StaticFiles(directory=str(FRONTEND_DIST), html=True), name="frontend")
 
 

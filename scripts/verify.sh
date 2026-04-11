@@ -13,9 +13,16 @@ pass() { :; }  # silent on success
 fail() { echo "FAIL: $1" >&2; FAIL=1; }
 
 # ── Backend checks ──────────────────────────────────────────
-if [ -d "$PA/backend/.venv" ]; then
+# venv naming: .venv_tk for user tk, .venv for user gtpv
+if [ -d "$PA/backend/.venv_$(whoami)" ]; then
+  PYTHON="$PA/backend/.venv_$(whoami)/bin/python"
+elif [ -d "$PA/backend/.venv" ]; then
   PYTHON="$PA/backend/.venv/bin/python"
+else
+  echo "SKIP: backend venv not found (run: cd program-a-reels-booth/backend && python3 -m venv .venv_\$(whoami) && .venv_\$(whoami)/bin/pip install -r requirements.txt)" >&2
+fi
 
+if [ -n "${PYTHON:-}" ]; then
   # Import smoke test
   (cd "$PA/backend" && $PYTHON -c "import main" 2>/dev/null) && pass || fail "backend import"
 
@@ -23,8 +30,6 @@ if [ -d "$PA/backend/.venv" ]; then
   if [ -d "$PA/backend/tests" ] && ls "$PA/backend/tests"/test_*.py 1>/dev/null 2>&1; then
     (cd "$PA/backend" && $PYTHON -m pytest tests/ -q --tb=short 2>&1) || fail "backend tests"
   fi
-else
-  echo "SKIP: backend venv not found (run: cd program-a-reels-booth/backend && python3.12 -m venv .venv && .venv/bin/pip install -r requirements.txt)" >&2
 fi
 
 # ── Frontend checks ─────────────────────────────────────────
