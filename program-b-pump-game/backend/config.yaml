@@ -1,0 +1,24 @@
+server:
+  host: "0.0.0.0"
+  port: 8001
+  storage_path: "./storage"
+  frontend_dist: "../frontend/dist"
+
+game:
+  perfect_window_ms: 50
+  great_window_ms: 100
+  good_window_ms: 150
+  scroll_speed: 400
+  note_radius: 30
+  hit_zone_y_percent: 85
+  perfect_points: 100
+  great_points: 70
+  good_points: 40
+  result_display_seconds: 8
+  countdown_seconds: 3
+  lane_keys: ["a", "s", "d", "f", "g"]
+  audio_offset_ms: 0
+
+charts:
+  - id: "chart_1"
+    file: "charts/chart_1.json"

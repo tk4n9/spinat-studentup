@@ -31,7 +31,15 @@ export default function RecordingScreen() {
     if (previewStream && selectedFormat && !started.current) {
       started.current = true;
       previewRef.current && (previewRef.current.srcObject = previewStream);
-      startRecording(selectedFormat).then(() => startTimer());
+      startRecording(selectedFormat).then(() => {
+        startTimer();
+        // Signal Program B game monitor to start (best-effort — if B not running, A works fine)
+        fetch('http://localhost:8001/api/game/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chart_id: 'chart_1' }),
+        }).catch(() => {});
+      });
     }
   }, [previewStream, selectedFormat, startRecording, startTimer]);
 

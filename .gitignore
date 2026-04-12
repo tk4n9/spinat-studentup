@@ -20,6 +20,10 @@ program-a-reels-booth/backend/storage/instagram/
 program-a-reels-booth/backend/storage/temp/
 !program-a-reels-booth/backend/storage/.gitkeep
 
+# Program B storage (scores are ephemeral per deployment)
+program-b-pump-game/backend/storage/scores/
+!program-b-pump-game/backend/storage/scores/.gitkeep
+
 # OS
 .DS_Store
 Thumbs.db

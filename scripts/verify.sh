@@ -45,6 +45,34 @@ else
   echo "SKIP: frontend node_modules not found (run: cd program-a-reels-booth/frontend && npm install)" >&2
 fi
 
+# ── Program B: Backend checks ──────────────────────────────
+PB="$ROOT/program-b-pump-game"
+
+if [ -d "$PB/backend/.venv_$(whoami)" ]; then
+  PYTHON_B="$PB/backend/.venv_$(whoami)/bin/python"
+elif [ -d "$PB/backend/.venv" ]; then
+  PYTHON_B="$PB/backend/.venv/bin/python"
+else
+  echo "SKIP: Program B backend venv not found (run: cd program-b-pump-game/backend && python3 -m venv .venv_\$(whoami) && .venv_\$(whoami)/bin/pip install -r requirements.txt)" >&2
+fi
+
+if [ -n "${PYTHON_B:-}" ]; then
+  (cd "$PB/backend" && $PYTHON_B -c "import main" 2>/dev/null) && pass || fail "program-b backend import"
+
+  if [ -d "$PB/backend/tests" ] && ls "$PB/backend/tests"/test_*.py 1>/dev/null 2>&1; then
+    (cd "$PB/backend" && $PYTHON_B -m pytest tests/ -q --tb=short 2>&1) || fail "program-b backend tests"
+  fi
+fi
+
+# ── Program B: Frontend checks ─────────────────────────────
+if [ -d "$PB/frontend/node_modules" ]; then
+  TSC_B="$PB/frontend/node_modules/.bin/tsc"
+  (cd "$PB/frontend" && $TSC_B --noEmit 2>&1) || fail "program-b frontend typecheck"
+  (cd "$PB/frontend" && npm run build --silent 2>&1) || fail "program-b frontend build"
+else
+  echo "SKIP: Program B frontend node_modules not found (run: cd program-b-pump-game/frontend && npm install)" >&2
+fi
+
 # ── Result ───────────────────────────────────────────────────
 if [ $FAIL -ne 0 ]; then
   echo "" >&2
