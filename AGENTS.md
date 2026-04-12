@@ -21,7 +21,7 @@ This runs typecheck, backend import check, and tests. **If it passes silently, y
 | Program | Directory | AGENTS.md | Status |
 |---|---|---|---|
 | A: 릴스 Booth | `program-a-reels-booth/` | [AGENTS.md](program-a-reels-booth/AGENTS.md) | Complete |
-| B: TBD | TBD | — | Not started |
+| B: 미니 피아노 타일식 펌프 | `program-b-pump-game/` | [PRD.md](program-b-pump-game/PRD.md) | Planning complete, blocked on client Qs |
 
 ## Architecture Constraints
 
