@@ -66,7 +66,8 @@ def test_formats_returns_list(client):
     assert r.status_code == 200
     fmts = r.json()
     assert isinstance(fmts, list)
-    assert len(fmts) == 4
+    assert len(fmts) == 1
+    assert fmts[0]["duration_seconds"] == 30
     assert all("id" in f and "duration_seconds" in f for f in fmts)
 
 

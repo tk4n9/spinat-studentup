@@ -6,14 +6,45 @@ This file tracks the history of changes, decisions, and current status for all p
 
 ## Repository Overview
 
-| Program | Directory | Status |
+| Booth | Directory | Status |
 |---|---|---|
-| Program A: 릴스 Booth & 모니터 영상전시 툴 | `program-a-reels-booth/` | 🟢 Complete (awaiting user config) |
-| Program B: TBD | TBD | ⬜ Not started |
+| Booth 1 — Performance (음원 + 촬영) | `program-a-reels-booth/` | 🟢 Complete (audio-overlay scope blocked on client spec) |
+| Booth 2 — Objects (사물 수음) | `booth-2-objects/` | 🟡 Scaffolded (fork of Program A, 30s fixed) |
+| Booth 3 — Pump Game (발판 게임) | `program-b-pump-game/` | 🟡 Scaffolded (planning complete, blocked on song + date) |
 
 ---
 
 ## Log
+
+---
+
+### 2026-04-21 — iPad MP4 Recorder Refactor (Program A + Booth 2)
+
+**User Prompt:**
+> Booth3: I will going to attach physical pads (experimenting several options, I think i'll will make some external physical pad that can be interpreted as keyboard input)
+> Booth2: current full flow is correct.
+> Yes. I approve the Ipad mp4 refactor. /ralph please start it.
+
+**Background:**
+Hardware reality: 1 MacBook + 4 iPads + 4 LG StandbyMe TVs, no per-booth PCs. iPad Safari MediaRecorder produces only MP4 (H.264/AAC), not webm. Previous code assumed webm everywhere — hardcoded `recording.webm` filename, unconditional `fix-webm-duration` call (corrupts MP4 moov atom), `ContentType='video/webm'` in R2 uploader.
+
+**Actions Taken:**
+- `program-a-reels-booth/frontend/src/pad/hooks/useVideoRecorder.ts` + booth-2 fork: added `recordedMimeType` state, gated `fixWebmDuration` on `mimeType.startsWith('video/webm')`, exposed mimeType in hook return.
+- `program-a-reels-booth/frontend/src/api/endpoints.ts` + booth-2 fork: `uploadVideo` derives extension from `blob.type` (`mp4`/`webm`).
+- `program-a-reels-booth/backend/services/r2.py` + booth-2 fork: added `_CONTENT_TYPES` dict + `_content_type_for()` helper; unknown suffix → `application/octet-stream`.
+- `program-a-reels-booth/backend/tests/test_api.py` + booth-2 fork: added `_fake_mp4()` helper + `test_upload_returns_id_mp4` + `test_finalize_mp4_save_only` (asserts `.mp4` suffix preserved in DISPLAY_PATH).
+
+**Scope Notes:**
+- Program B (pump-game) intentionally excluded — no `/pad` route, no useVideoRecorder.
+- Booth 3 input routing (physical pads → keyboard HID) deferred to hardware experiment.
+
+**Verification:**
+- `tsc --noEmit`: 0 errors both frontends.
+- `vite build`: success both frontends.
+- `pytest`: 10 → 12 passed both backends (+2 MP4 tests each).
+- `bash scripts/verify.sh`: EXIT=0.
+- Architect review: APPROVE — end-to-end suffix chain intact (blob filename → UploadFile → storage.py → r2.py).
+- Deslop: removed unused `json`/`Path` imports from both test files. Post-deslop regression: EXIT=0.
 
 ---
 
@@ -325,6 +356,70 @@ All code written, tested, and architect-verified. Awaiting user config (format s
 **Verification:**
 - `npm install` → exit 0
 - `tsc --noEmit` → exit 0, zero errors
+
+---
+
+### 2026-04-20 — Repo: 3-Booth Restructure + Booth-2 Scaffold
+
+**User Prompt (new client spec):**
+> 부스 1 — 음원(주말 녹음 예정) + 영상 촬영 / 부스 2 — 사물을 만지면 소리 나는 걸 수음해 영상에 입힘 / 부스 3 — 기존 Program B 발판 게임.
+> 즉시 착수 가능 작업부터. /ralph start implementing.
+
+**Client Q&A (architecture decisions):**
+
+| # | Question | Answer |
+|---|---|---|
+| B2-1 | 부스 2 마이크 | 갤럭시 패드 내장 마이크 |
+| B2-3 | 부스 2 녹화 길이 | 30초 고정 |
+| C4 | 부스 식별자 | Configurable (config.yaml에 booth section) |
+| C5 | 부스 간 거리 | Geographically separated (원격 접속 없음) |
+| C6 | R2 버킷 | Unified — single bucket, booth_id prefix로 네임스페이스 |
+| C7 | Instagram 폴더 | Local (per-booth PC, no sync) |
+| C8 | Challenger counter | Independent per-booth (local file) |
+| C10 | Remote access | Not required |
+
+**Actions Taken:**
+
+1. **Program A: added booth_id config + R2 key prefix**
+   - `backend/config.yaml`: new top-level `booth: { id: 1, name: "performance" }` section
+   - `backend/config.py`: exports `BOOTH_ID` (int), `BOOTH_NAME` (str)
+   - `backend/services/r2.py`: R2 key changed from `videos/{id}{suffix}` → `videos/booth-{BOOTH_ID}/{id}{suffix}`
+   - Rationale: unified R2 bucket shared by 3 booths, prefix prevents key collisions + enables per-booth access control later.
+
+2. **Booth 2 scaffold — `booth-2-objects/`**
+   - Full copy of `program-a-reels-booth/` (backend + frontend + tests).
+   - `backend/config.yaml`: `server.port=8002`, `booth.id=2`, `booth.name="objects"`, single format (`오브제 챌린지`, 30s, no music_file).
+   - `backend/main.py`: title → `"spinat 오브제 Booth (#2)"`, startup banner URLs updated to `:8002`.
+   - `backend/run.sh`: port `8000` → `8002`.
+   - `backend/tests/test_api.py`: `len(fmts) == 4` → `len(fmts) == 1`, added `duration_seconds == 30` assertion.
+   - `frontend/package.json`: name → `spinat-booth-2-objects-frontend`.
+   - `frontend/vite.config.ts`: all dev proxies → `:8002`.
+   - `frontend/index.html`: title → `"spinat 오브제 Booth (#2)"`.
+   - `frontend/src/pad/screens/StartScreen.tsx`: footer → `@spinat.official · 오브제 #2`.
+   - New docs: `AGENTS.md`, `README.md`, `PRD.md` describing booth-2 scope + relationship to Program A.
+   - Rationale: no shared/ module extracted yet — fork first, extract common code after pattern stabilizes across booths.
+
+3. **Program B: PEP 604 compatibility fix**
+   - `backend/services/scoring.py`: added `from __future__ import annotations`.
+   - Root cause: `dict | None` return annotation requires Python 3.10+; booth PCs may run 3.9. `__future__` import defers annotation evaluation → works on 3.9.
+
+4. **`scripts/verify.sh` extended**
+   - Added `pick_python()` helper: probes `.venv_$(whoami)/bin/python` then `.venv/bin/python`, returns first executable path. Handles dangling symlinks from homebrew Python upgrades.
+   - New booth-2 backend + frontend check block mirroring Program A.
+   - `.venv_tk` (user `tk`) and `.venv` (user `gtpv`) both supported transparently.
+
+5. **Docs updated**
+   - `AGENTS.md`: 2-program → 3-booth table, geographical separation note, `videos/booth-{id}/` R2 key convention.
+   - `STATUSLOG.md`: this entry.
+   - `ARCHITECTURE.md`: new "3-Booth Topology" section + per-booth dependency layer notes.
+
+**Verification:**
+- `bash scripts/verify.sh` → exit 0 (Program A + B + booth-2 all pass; pytest 10 passed, tsc 0 errors, vite build OK).
+
+**Status:**
+- Booth 1 (`program-a-reels-booth/`): 🟢 Complete for recording path. Audio-overlay scope still blocked on client spec (곡 파일, duration, speaker, sync tolerance).
+- Booth 2 (`booth-2-objects/`): 🟡 Scaffolded. Ready for venue deployment once Galaxy Pad mic capture tested.
+- Booth 3 (`program-b-pump-game/`): 🟡 Scaffolded. Still blocked on 8 client questions (song, event date, pad builder, etc.).
 
 ---
 
