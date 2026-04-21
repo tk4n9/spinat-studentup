@@ -4,6 +4,12 @@ server:
   storage_path: "./storage"
   frontend_dist: "../frontend/dist"
 
+# Booth identity — used to namespace R2 object keys in the shared bucket
+# so videos from each geographically separated booth land under a distinct prefix.
+booth:
+  id: 1
+  name: "performance"
+
 session:
   counter_file: "./storage/counter.json"
 

@@ -5,8 +5,10 @@
 
 ## Repository
 
-Two independent programs for @spinat.official event tools.
-Each lives in its own directory with its own AGENTS.md.
+Three independent booth programs for @spinat.official event tools.
+Each lives in its own directory with its own AGENTS.md and is deployed
+to a **geographically separated** PC. The booths share one Cloudflare R2
+bucket; keys are namespaced under `videos/booth-{id}/`.
 
 ## Verify Everything
 
@@ -18,10 +20,11 @@ This runs typecheck, backend import check, and tests. **If it passes silently, y
 
 ## Programs
 
-| Program | Directory | AGENTS.md | Status |
+| Booth | Directory | AGENTS.md / PRD | Status |
 |---|---|---|---|
-| A: 릴스 Booth | `program-a-reels-booth/` | [AGENTS.md](program-a-reels-booth/AGENTS.md) | Complete |
-| B: 미니 피아노 타일식 펌프 | `program-b-pump-game/` | [PRD.md](program-b-pump-game/PRD.md) | Planning complete, blocked on client Qs |
+| 1 — Performance (음원 + 촬영) | `program-a-reels-booth/` | [AGENTS.md](program-a-reels-booth/AGENTS.md) | Complete (audio-overlay scope pending client spec) |
+| 2 — Objects (사물 수음) | `booth-2-objects/` | [AGENTS.md](booth-2-objects/AGENTS.md) | Scaffolded — fork of Program A with 30s fixed |
+| 3 — Pump Game (발판 게임) | `program-b-pump-game/` | [PRD.md](program-b-pump-game/PRD.md) | Planning complete, blocked on song + date |
 
 ## Architecture Constraints
 

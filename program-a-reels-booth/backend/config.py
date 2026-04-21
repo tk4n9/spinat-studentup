@@ -16,6 +16,12 @@ SERVER_PORT: int = _yaml["server"]["port"]
 STORAGE_PATH: Path = (_BASE / _yaml["server"]["storage_path"]).resolve()
 FRONTEND_DIST: Path = (_BASE / _yaml["server"]["frontend_dist"]).resolve()
 
+# ── Booth identity ────────────────────────────────────
+# booth.id prefixes R2 keys so videos from separate booths stay
+# namespaced inside the one bucket shared across all deployments.
+BOOTH_ID: int = _yaml["booth"]["id"]
+BOOTH_NAME: str = _yaml["booth"]["name"]
+
 # ── Session ───────────────────────────────────────────
 COUNTER_FILE: Path = (_BASE / _yaml["session"]["counter_file"]).resolve()
 

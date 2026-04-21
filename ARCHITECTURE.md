@@ -4,6 +4,48 @@ Machine-readable architectural constraints. Agents must respect these rules.
 
 ---
 
+## 3-Booth Deployment Model
+
+Three booths deploy independently on **geographically separated PCs**. No remote access between them. Each booth runs its own backend + frontend + local storage. They share exactly one resource: a single Cloudflare R2 bucket with keys namespaced by booth.
+
+```
+┌────────────────┐   ┌────────────────┐   ┌────────────────┐
+│ Booth 1 PC      │   │ Booth 2 PC      │   │ Booth 3 PC      │
+│ performance     │   │ objects         │   │ pump-game       │
+│ :8000 FastAPI   │   │ :8002 FastAPI   │   │ :8001 FastAPI   │
+│ Galaxy Pad Chr. │   │ Galaxy Pad Chr. │   │ Galaxy Pad Chr. │
+│ local counter   │   │ local counter   │   │ local counter   │
+│ local instagram/│   │ local instagram/│   │ local instagram/│
+└────────┬────────┘   └────────┬────────┘   └────────┬────────┘
+         │                     │                     │
+         │ R2 key:             │ R2 key:             │ (no R2 upload
+         │ videos/booth-1/...  │ videos/booth-2/...  │  this booth)
+         └─────────────────────┼─────────────────────┘
+                               ▼
+                    ┌──────────────────────┐
+                    │ Cloudflare R2 bucket │
+                    │ (QR code downloads)  │
+                    └──────────────────────┘
+```
+
+### Rules (booth-level)
+
+1. **No cross-booth runtime dependencies.** Each booth PC boots, runs, and fails independently. No booth may require another to be online.
+2. **R2 key prefix = booth identifier.** All uploads use `videos/booth-{BOOTH_ID}/{video_id}{suffix}`. `BOOTH_ID` comes from each booth's `config.yaml` `booth:` section.
+3. **Challenger counter is local per booth.** Counter file lives on each booth PC. No syncing.
+4. **Instagram folder is local per booth.** Each booth PC has its own `storage/instagram/` directory. No syncing.
+5. **Booth identifier is configurable.** `config.yaml` → `booth: { id, name }`. Never hardcoded in source.
+
+### Booth ↔ Program Mapping
+
+| Booth | Role | Directory | Port | Status |
+|---|---|---|---|---|
+| 1 | Performance (음원 + 촬영) | `program-a-reels-booth/` | 8000 | Complete (audio-overlay pending client spec) |
+| 2 | Objects (사물 수음) | `booth-2-objects/` | 8002 | Scaffolded — fork of Program A with 30s fixed |
+| 3 | Pump Game (발판 게임) | `program-b-pump-game/` | 8001 | Scaffolded — blocked on song + date |
+
+---
+
 ## System Topology
 
 ### Program A: 릴스 Booth

@@ -6,6 +6,8 @@ set -e
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PA="$ROOT/program-a-reels-booth"
+PB="$ROOT/program-b-pump-game"
+B2="$ROOT/booth-2-objects"
 FAIL=0
 
 # ── Helpers ──────────────────────────────────────────────────
@@ -13,14 +15,19 @@ pass() { :; }  # silent on success
 fail() { echo "FAIL: $1" >&2; FAIL=1; }
 
 # ── Backend checks ──────────────────────────────────────────
-# venv naming: .venv_tk for user tk, .venv for user gtpv
-if [ -d "$PA/backend/.venv_$(whoami)" ]; then
-  PYTHON="$PA/backend/.venv_$(whoami)/bin/python"
-elif [ -d "$PA/backend/.venv" ]; then
-  PYTHON="$PA/backend/.venv/bin/python"
-else
-  echo "SKIP: backend venv not found (run: cd program-a-reels-booth/backend && python3 -m venv .venv_\$(whoami) && .venv_\$(whoami)/bin/pip install -r requirements.txt)" >&2
-fi
+# Pick a usable python — the venv python must exist AND be executable
+# (homebrew python upgrades can leave a dangling symlink in an old venv).
+pick_python() {
+  local base="$1"
+  for cand in "$base/.venv_$(whoami)/bin/python" "$base/.venv/bin/python"; do
+    if [ -x "$cand" ]; then echo "$cand"; return 0; fi
+  done
+  return 1
+}
+
+PYTHON="$(pick_python "$PA/backend")" || {
+  echo "SKIP: backend venv not found or unusable (run: cd program-a-reels-booth/backend && python3 -m venv .venv_\$(whoami) && .venv_\$(whoami)/bin/pip install -r requirements.txt)" >&2
+}
 
 if [ -n "${PYTHON:-}" ]; then
   # Import smoke test
@@ -46,15 +53,9 @@ else
 fi
 
 # ── Program B: Backend checks ──────────────────────────────
-PB="$ROOT/program-b-pump-game"
-
-if [ -d "$PB/backend/.venv_$(whoami)" ]; then
-  PYTHON_B="$PB/backend/.venv_$(whoami)/bin/python"
-elif [ -d "$PB/backend/.venv" ]; then
-  PYTHON_B="$PB/backend/.venv/bin/python"
-else
-  echo "SKIP: Program B backend venv not found (run: cd program-b-pump-game/backend && python3 -m venv .venv_\$(whoami) && .venv_\$(whoami)/bin/pip install -r requirements.txt)" >&2
-fi
+PYTHON_B="$(pick_python "$PB/backend")" || {
+  echo "SKIP: Program B backend venv not found or unusable (run: cd program-b-pump-game/backend && python3 -m venv .venv_\$(whoami) && .venv_\$(whoami)/bin/pip install -r requirements.txt)" >&2
+}
 
 if [ -n "${PYTHON_B:-}" ]; then
   (cd "$PB/backend" && $PYTHON_B -c "import main" 2>/dev/null) && pass || fail "program-b backend import"
@@ -71,6 +72,28 @@ if [ -d "$PB/frontend/node_modules" ]; then
   (cd "$PB/frontend" && npm run build --silent 2>&1) || fail "program-b frontend build"
 else
   echo "SKIP: Program B frontend node_modules not found (run: cd program-b-pump-game/frontend && npm install)" >&2
+fi
+
+# ── Booth 2: Backend checks ────────────────────────────────
+PYTHON_B2="$(pick_python "$B2/backend")" || {
+  echo "SKIP: Booth 2 backend venv not found or unusable (run: cd booth-2-objects/backend && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt)" >&2
+}
+
+if [ -n "${PYTHON_B2:-}" ]; then
+  (cd "$B2/backend" && $PYTHON_B2 -c "import main" 2>/dev/null) && pass || fail "booth-2 backend import"
+
+  if [ -d "$B2/backend/tests" ] && ls "$B2/backend/tests"/test_*.py 1>/dev/null 2>&1; then
+    (cd "$B2/backend" && $PYTHON_B2 -m pytest tests/ -q --tb=short 2>&1) || fail "booth-2 backend tests"
+  fi
+fi
+
+# ── Booth 2: Frontend checks ───────────────────────────────
+if [ -d "$B2/frontend/node_modules" ]; then
+  TSC_B2="$B2/frontend/node_modules/.bin/tsc"
+  (cd "$B2/frontend" && $TSC_B2 --noEmit 2>&1) || fail "booth-2 frontend typecheck"
+  (cd "$B2/frontend" && npm run build --silent 2>&1) || fail "booth-2 frontend build"
+else
+  echo "SKIP: Booth 2 frontend node_modules not found (run: cd booth-2-objects/frontend && npm install)" >&2
 fi
 
 # ── Result ───────────────────────────────────────────────────
