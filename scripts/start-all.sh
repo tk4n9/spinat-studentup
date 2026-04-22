@@ -19,7 +19,7 @@ start_booth() {
 pids=()
 pids+=("$(start_booth "$ROOT/program-a-reels-booth/backend" 8000 booth-1)")
 pids+=("$(start_booth "$ROOT/booth-2-objects/backend"       8002 booth-2)")
-pids+=("$(start_booth "$ROOT/program-b-pump-game/backend"   8001 booth-3)")
+pids+=("$(start_booth "$ROOT/booth-3-record/backend"        8001 booth-3)")
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  spinat-studentup — all booths running"
@@ -27,7 +27,7 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo ""
 echo "  Booth 1 (Performance):  http://localhost:8000   pid=${pids[0]}"
 echo "  Booth 2 (Objects):      http://localhost:8002   pid=${pids[1]}"
-echo "  Booth 3 (Pump Game):    http://localhost:8001   pid=${pids[2]}"
+echo "  Booth 3 (Record):       http://localhost:8001   pid=${pids[2]}"
 echo ""
 echo "  Logs:  $LOG_DIR/booth-{1,2,3}.log"
 echo "  Stop: Ctrl+C (this script reaps all children)"

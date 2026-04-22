@@ -7,7 +7,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-BOOTHS=(program-a-reels-booth booth-2-objects program-b-pump-game)
+BOOTHS=(program-a-reels-booth booth-2-objects booth-3-record)
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  spinat-studentup — bootstrap"

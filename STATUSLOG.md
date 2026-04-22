@@ -10,7 +10,7 @@ This file tracks the history of changes, decisions, and current status for all p
 |---|---|---|
 | Booth 1 — Performance (음원 + 촬영) | `program-a-reels-booth/` | 🟢 Complete (audio-overlay scope blocked on client spec) |
 | Booth 2 — Objects (사물 수음) | `booth-2-objects/` | 🟡 Scaffolded (fork of Program A, 30s fixed) |
-| Booth 3 — Pump Game (발판 게임) | `program-b-pump-game/` | 🟡 Scaffolded (planning complete, blocked on song + date) |
+| Booth 3 — Record (pre-event triage) | `booth-3-record/` | 🟢 Clone of Booth 1, ready for event. Pump-game code archived under `archive/pump-game/` for post-event revival. |
 
 ---
 
@@ -486,6 +486,54 @@ All code written, tested, and architect-verified. Awaiting user config (format s
 - Booth 1 (`program-a-reels-booth/`): 🟢 Complete for recording path. Audio-overlay scope still blocked on client spec (곡 파일, duration, speaker, sync tolerance).
 - Booth 2 (`booth-2-objects/`): 🟡 Scaffolded. Ready for venue deployment once Galaxy Pad mic capture tested.
 - Booth 3 (`program-b-pump-game/`): 🟡 Scaffolded. Still blocked on 8 client questions (song, event date, pad builder, etc.).
+
+---
+
+### 2026-04-22 — Path C: Booth-3 Onboarding as Recording Clone (Pre-Event Triage)
+
+**User Prompt:**
+> rehearsal day is tomorrow and the main event is the day after tomorrow. Please go for /ralph path to implement them
+
+**Background:**
+Rehearsal 2026-04-23, event 2026-04-24. The consensus unify plan (`.omc/plans/unify-booths-v2.md`) requires a ≥3-day rehearsal buffer (Principle 3 / US-15) — no longer met by the calendar.
+
+**Decision:** Scope-reduce to **Path C** — keep Booth 1 / Booth 2 untouched (Ralph #3 green baseline), archive dormant pump-game to `archive/pump-game/`, clone Booth 1 to `booth-3-record/` for the event-day gap. Full unify plan deferred to post-event.
+
+**Actions Taken:**
+
+1. **Archived pump-game** — `git mv program-b-pump-game archive/pump-game` (46 rename entries). Added `archive/README.md` with 5-step revival checklist.
+
+2. **Cloned booth-1 → booth-3-record** — `rsync -a` excluding `.venv/`, `node_modules/`, `dist/`. Identity edits:
+   - `config.yaml`: port 8000 → 8001, booth.id 1 → 3, booth.name "performance" → "booth-3".
+   - `pyproject.toml`: name → "spinat-booth-3-record".
+   - `frontend/package.json`: name similarly renamed.
+   - `.env` copied (shared R2 bucket, per-booth key prefix).
+
+3. **Bootstrapped deps** — `uv sync`, `npm ci`, `npm run build`. All checks pass (12/12 pytest, tsc 0 errors, 66-module vite build).
+
+4. **Updated 3 launcher scripts:**
+   - `scripts/bootstrap.sh`: `BOOTHS=(... program-b-pump-game)` → `(... booth-3-record)`.
+   - `scripts/start-all.sh`: booth-3 `start_booth` target `program-b-pump-game/backend` → `booth-3-record/backend`. Banner text `"Booth 3 (Pump Game)"` → `"Booth 3 (Record)"`.
+   - `scripts/verify.sh`: booth-3 `check_backend` + `check_frontend` paths swapped; label updated.
+
+5. **Docs:** Overview table updated, `booth-3-record/README.md` rewritten as minimal pointer to booth-1 README.
+
+**Verification:**
+- `bash scripts/verify.sh` → EXIT=0 (all 3 booths, 12/12 pytest booth-3).
+- `git status`: 46 `R` (rename) entries + `booth-3-record/` untracked + `STATUSLOG.md` modified.
+
+**Why Path C over Path B (full unify now):**
+- Zero-day rehearsal buffer means any regression from the 8-commit refactor becomes an event-day hotfix -- exactly what Principle 3 forbids.
+- Path C diff: 3 script edits + 3 identity-file edits + 1 archive move + 2 docs (~30 min vs ~2-day refactor).
+- Ralph #3 green baseline (12/12 tests, verify EXIT=0, 22.20s bootstrap) preserved as recovery point.
+- 3-codebase duplication accepted as event-safety cost; unify plan deferred to post-event.
+
+**Follow-ups (post-event):**
+- Execute `.omc/plans/unify-booths-v2.md` with ≥3-day rehearsal buffer.
+- Resolve open questions in `.omc/plans/open-questions.md` (StartScreen copy, R2 bucket split, game revival).
+
+**Rehearsal outcome (US-009):**
+- Scheduled 2026-04-23. Metrics in `.omc/progress.txt`.
 
 ---
 

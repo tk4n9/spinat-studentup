@@ -75,8 +75,8 @@ check_frontend "booth-1 (performance)" "$ROOT/program-a-reels-booth/frontend"
 check_backend  "booth-2 (objects)"     "$ROOT/booth-2-objects/backend"
 check_frontend "booth-2 (objects)"     "$ROOT/booth-2-objects/frontend"
 
-check_backend  "booth-3 (pump-game)"   "$ROOT/program-b-pump-game/backend"
-check_frontend "booth-3 (pump-game)"   "$ROOT/program-b-pump-game/frontend"
+check_backend  "booth-3 (record)"      "$ROOT/booth-3-record/backend"
+check_frontend "booth-3 (record)"      "$ROOT/booth-3-record/frontend"
 
 # ── Result ──────────────────────────────────────────────────
 if [ $FAIL -ne 0 ]; then
