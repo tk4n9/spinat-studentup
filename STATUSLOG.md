@@ -64,7 +64,8 @@ Plan `.omc/plans/unify-booths-v2.md` Principle 3 requires ≥3 days between unif
 **Files Changed (chain summary):**
 - Renamed: `program-a-reels-booth/` → `recording-booth/` (git mv, preserves history).
 - Deleted: `booth-2-objects/`, `booth-3-record/`.
-- Added: `recording-booth/config/booth-{1,2,3}.yaml`, `recording-booth/backend/routers/booth.py`, `recording-booth/backend/tests/conftest.py`, `recording-booth/backend/tests/test_booth_identity.py`, `scripts/migrate-storage.sh`, `recording-booth/backend/storage/booth-{1,2,3}/.gitkeep`.
+- Added: `recording-booth/config/booth-{1,2,3}.yaml`, `recording-booth/backend/tests/conftest.py`, `recording-booth/backend/tests/test_booth_identity.py`, `scripts/migrate-storage.sh`, `recording-booth/backend/storage/booth-{1,2,3}/.gitkeep`.
+- Inlined `/api/booth` endpoint into `recording-booth/backend/main.py` (PRD US-005 explicitly allowed main.py or a dedicated routers/booth.py — inlining kept the router layer unchanged for minimal diff).
 - Rewritten: `recording-booth/backend/config.py` (Pydantic), `scripts/bootstrap.sh`, `scripts/start-all.sh`, `scripts/verify.sh`.
 - Modified (US-008 doc sweep, this commit): `STATUSLOG.md`, `CLAUDE.md`, `AGENTS.md`, `ARCHITECTURE.md`, `recording-booth/AGENTS.md`, `archive/README.md`.
 
