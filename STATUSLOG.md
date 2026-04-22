@@ -56,7 +56,7 @@ Commit chain (this session):
 **Verification:**
 - `bash scripts/verify.sh`: EXIT=0 (silent pass: 3× per-booth import smoke + 24 pytest tests + frontend tsc + vite build).
 - Manual smoke (logged to `.omc/progress.txt`): `curl http://localhost:{8000,8002,8001}/api/booth` each returns `{id: n, name, theme: {…}}` with the right per-booth identity.
-- Fresh-Mac rehearsal outcome pending in US-010.
+- **Fresh-Mac rehearsal (US-010, 2026-04-23):** rsync'd the repo (minus `.git`/`.venv`/`node_modules`/`dist`/`.omc/logs`) to `/tmp/ralph-5-unify-rehearsal-$$`. `bash scripts/bootstrap.sh` completed in **19 seconds** (warm uv + npm caches; cold-cache expected 2–4 min from 2026-04-22 uv-migration entry data). `bash scripts/start-all.sh` launched all 3 uvicorn processes; `curl` on `/` returned 200/200/200 for ports 8000/8002/8001; `curl /api/booth | jq .id` returned `1/2/3` with `name=performance/objects/booth-3` matching each booth's YAML. Korean `startCopy: "시작하기"` shipped identically through all 3 payloads. Clean teardown via SIGKILL on the uv-run → uvicorn child tree; post-teardown `lsof -i :8000 -i :8001 -i :8002` empty; rehearsal dir removed; main-repo `scripts/verify.sh` still EXIT=0 (rehearsal did not mutate working tree).
 
 **Principle 3 Waiver:**
 Plan `.omc/plans/unify-booths-v2.md` Principle 3 requires ≥3 days between unify-merge and event. Today is 2026-04-22, event is 2026-04-24 — buffer is ≤48h. User explicitly waived at session start. Mitigation: US-010 fresh-Mac rehearsal in /tmp/ before event; per-booth YAML typos surface at `scripts/verify.sh` time (US-007 import smoke). Timeline ownership is now user-side; Ralph delivered the unified codebase per the consensus plan.
