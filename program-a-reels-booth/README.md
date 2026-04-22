@@ -8,11 +8,10 @@
 
 ```bash
 cd backend
-python3.12 -m venv .venv
-.venv/bin/pip install -r requirements.txt
+uv sync                        # .venv/ 자동 생성, uv.lock 기반 설치
 
 # R2 설정 (선택 — 없어도 QR 제외 모든 기능 동작)
-cp .env.example .env   # → R2 credentials 입력
+cp .env.example .env           # → R2 credentials 입력
 
 bash run.sh
 ```
@@ -21,9 +20,11 @@ bash run.sh
 
 ```bash
 cd frontend
-npm install
-npm run build          # → dist/ 생성 (FastAPI가 자동으로 서빙)
+npm ci
+npm run build                  # → dist/ 생성 (FastAPI가 자동으로 서빙)
 ```
+
+> 처음 셋업이면 repo 루트에서 `bash scripts/bootstrap.sh` 한 번으로 3 booth 전체 백엔드+프론트 준비 완료.
 
 ### 3. 접속
 
@@ -60,18 +61,17 @@ cd frontend && npm run dev
 ```bash
 # 1. 백엔드
 cd backend
-python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt
+uv sync
 cp .env.example .env   # R2 없어도 핵심 플로우 동작
 
 # 2. 프론트엔드 빌드
 cd ../frontend
-npm install
+npm ci
 npm run build
 
 # 3. 서버 실행
 cd ../backend
-.venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000
+uv run uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 
 ### 데모 화면

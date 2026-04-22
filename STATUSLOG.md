@@ -18,6 +18,72 @@ This file tracks the history of changes, decisions, and current status for all p
 
 ---
 
+### 2026-04-22 — uv + pyproject.toml Migration Across 3 Booths
+
+**User Prompt:**
+> 시연이 급하진 않고, 실전에서 쓰기 편하도록 하는 것이 중요해. 왜냐면 실제 공연 날에 그날 처음 쓰는 맥북으로 서버를 돌려야 하거든.
+> 이제 어차피 드롭박스로 다른 곳에서 작업을 많이 하진 않을 것 같아서 (공연용 맥에서는 그냥 git clone할 예정, 내가 현재 사용하는 맥북이 여러개라서 여기저기에서 작업을 계속 이어가고 싶어서 그렇게 한 거였음. 앞으로 공연때까지는 하나의 맥으로 개발 예정) 그냥 모두가 .venv를 써도 될 것 같아. /ralph 구현 시작해 줘.
+
+**Background:**
+Event-day reliability is now the priority. On the performance day, the operator will git-clone onto a brand-new MacBook and must be able to boot all 3 booth servers with zero manual dependency wrangling. The prior Dropbox-era `.venv_$(whoami)` convention (supporting simultaneous work from accounts `tk` and `gtpv`) is obsolete — the user is consolidating onto a single Mac for the remaining run-up. Each booth previously relied on an ad-hoc `python3 -m venv .venv && pip install -r requirements.txt` flow with no lockfile and no Python-version pinning, which risks "worked yesterday, fails today" drift on a fresh system.
+
+**Actions Taken:**
+
+1. **Backend modernization (all 3 booths).** Replaced `requirements.txt` with `pyproject.toml` + uv-generated `uv.lock` for bit-exact reproducibility.
+   - `program-a-reels-booth/backend/pyproject.toml` (`spinat-booth-1-performance`) — pinned identical runtime deps (fastapi 0.110.1, uvicorn[standard] 0.29.0, python-multipart 0.0.9, boto3 1.34.84, qrcode[pil] 7.4.2, Pillow 10.3.0, PyYAML 6.0.1, python-dotenv 1.0.1, aiofiles 23.2.1) and dev group (pytest 8.1.1, httpx 0.27.0).
+   - `booth-2-objects/backend/pyproject.toml` (`spinat-booth-2-objects`) — same deps (byte-aligned fork of Program A).
+   - `program-b-pump-game/backend/pyproject.toml` (`spinat-booth-3-pump-game`) — preserved the looser `>=` bounds from the original scaffold (fastapi>=0.111.0, uvicorn[standard]>=0.29.0, PyYAML>=6.0) and added pytest/httpx dev group.
+   - All three declare `requires-python = ">=3.12,<3.13"` and `[tool.uv] package = false` (these are apps, not libraries).
+   - Ran `uv sync` in each backend to generate `uv.lock` and `.venv/`. Deleted the now-redundant `requirements.txt` in all three booths.
+
+2. **Unified venv convention.** Dropped `.venv_$(whoami)` entirely. All booths now use the plain `.venv/` directory that `uv sync` creates. The `.gitignore` was updated to remove the `.venv*/` wildcard (redundant with `.venv/`) and add an explicit comment that `uv.lock` must stay tracked.
+
+3. **Runtime scripts rewritten.**
+   - `program-a-reels-booth/backend/run.sh`, `booth-2-objects/backend/run.sh`, `program-b-pump-game/backend/run.sh` — all three now `exec uv run uvicorn main:app --host 0.0.0.0 --port <port> --reload`. No more `.venv/bin/uvicorn` fallback chain. `.env` loading switched from the unsafe `export $(grep -v '^#' .env | xargs)` pattern to `set -a; . ./.env; set +a`. Operator-facing banner preserved; IP discovery now uses `uv run python` instead of a system `python3`.
+
+4. **New orchestration scripts.**
+   - `scripts/bootstrap.sh` — one-command fresh-Mac setup. Installs uv via the official `astral.sh` installer if missing (extends PATH to include `$HOME/.local/bin` + `$HOME/.cargo/bin`), runs `uv python install 3.12`, fires `uv sync --frozen` in all 3 backends in parallel, then runs `npm ci && npm run build` for each frontend sequentially (to avoid a vite build memory spike), and finally runs `scripts/verify.sh` as a post-flight gate. Prints a clear `✓ Bootstrap complete` marker on success.
+   - `scripts/start-all.sh` — launches all 3 backends in background via `uv run uvicorn`, tees each booth's output to `.omc/logs/booth-{1,2,3}.log`, installs an `INT`/`TERM` trap that reaps children cleanly, and `wait`s so Ctrl+C exits gracefully.
+
+5. **Verification script simplified.** `scripts/verify.sh` rewritten:
+   - Removed `pick_python()` — no longer needed.
+   - Backend checks run via `uv run --frozen python -c "import main"` and `uv run --frozen pytest tests/ -q`.
+   - Skips a booth gracefully if `pyproject.toml` or `uv.lock` is missing (prints `SKIP`, doesn't fail), and skips the whole backend lane if `uv` is not on PATH.
+   - Frontend lane (tsc + vite build) behavior unchanged.
+   - Single `check_backend` / `check_frontend` pair drives all 3 booths — removes the copy-paste divergence the old script had.
+
+6. **Documentation refreshed.**
+   - `CLAUDE.md` — Quick Reference now lists `bootstrap.sh` + `start-all.sh`. Backend section rewritten around `uv sync` / `uv run`. Added rule 7: always commit `uv.lock`. Added an event-day workflow section.
+   - `AGENTS.md` — Key Commands block replaced with uv-based equivalents. New Tooling section documents Python 3.12 via uv (no pyenv, no system Python).
+   - `program-a-reels-booth/README.md` — both Quick Setup and Client Demo sections converted to `uv sync` + `uv run uvicorn`.
+   - `booth-2-objects/README.md` — Setup section converted; points first-time operators at `scripts/bootstrap.sh`.
+   - `program-b-pump-game/README.md` — Quick Setup and Client Demo sections converted.
+   - The `.venv_$(whoami)` / `.venv_tk` strings remaining in the repo now live only in prior STATUSLOG entries (where they document history — intentionally preserved).
+
+**Scope Notes:**
+- PRDs (`program-a-reels-booth/PRD.md`, `program-b-pump-game/PRD.md`) still reference `requirements.txt` in their narrative — those are planning artifacts describing the original intent, not operator-facing setup docs, and were left untouched.
+- pyenv is deliberately **not** adopted — uv manages Python itself via `uv python install 3.12`, which removes one tool from the fresh-Mac dependency chain.
+
+**Verification:**
+- `bash scripts/verify.sh`: EXIT=0 (silent pass across 3 booths × backend import / pytest / tsc / vite build).
+- All 3 `uv.lock` files tracked by git.
+- Clean-Mac rehearsal: fresh `git clone` to a tmp directory, `bash scripts/bootstrap.sh` from scratch, `bash scripts/start-all.sh` — see Story US-011 outcome in `.omc/progress.txt`.
+
+**Migration Notes (restore path):**
+If a booth needs to temporarily revert, `uv export --format requirements-txt > requirements.txt` from its backend directory regenerates a pip-compatible file from the locked pins. The prior `.venv_$(whoami)` convention can be re-enabled by setting `UV_PROJECT_ENVIRONMENT=.venv_$(whoami)` before `uv sync` — no source changes required.
+
+**Files Changed:**
+- Added: `program-a-reels-booth/backend/pyproject.toml`, `program-a-reels-booth/backend/uv.lock`
+- Added: `booth-2-objects/backend/pyproject.toml`, `booth-2-objects/backend/uv.lock`
+- Added: `program-b-pump-game/backend/pyproject.toml`, `program-b-pump-game/backend/uv.lock`
+- Added: `scripts/bootstrap.sh`, `scripts/start-all.sh`
+- Deleted: `program-a-reels-booth/backend/requirements.txt`, `booth-2-objects/backend/requirements.txt`, `program-b-pump-game/backend/requirements.txt`
+- Modified: `program-a-reels-booth/backend/run.sh`, `booth-2-objects/backend/run.sh`, `program-b-pump-game/backend/run.sh`
+- Modified: `scripts/verify.sh`, `.gitignore`
+- Modified: `CLAUDE.md`, `AGENTS.md`, `program-a-reels-booth/README.md`, `booth-2-objects/README.md`, `program-b-pump-game/README.md`, `STATUSLOG.md`
+
+---
+
 ### 2026-04-21 — iPad MP4 Recorder Refactor (Program A + Booth 2)
 
 **User Prompt:**

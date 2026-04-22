@@ -9,11 +9,12 @@ Program A (릴스 Booth)와 연동하여, 게임 종료 후 녹화된 영상이 
 
 ```bash
 cd backend
-python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt
+uv sync            # .venv/ 자동 생성, uv.lock 기반 설치
 bash run.sh
 # → http://localhost:8001 에서 서버 시작
 ```
+
+> 처음 셋업이면 repo 루트에서 `bash scripts/bootstrap.sh` 로 3 booth 전체 한 번에 준비 가능.
 
 ### 2. 프론트엔드
 
@@ -43,13 +44,12 @@ npm run build          # → dist/ 생성 (FastAPI가 자동으로 서빙)
 ```bash
 # 1. 백엔드
 cd program-b-pump-game/backend
-python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt
-.venv/bin/uvicorn main:app --host 0.0.0.0 --port 8001 --reload
+uv sync
+uv run uvicorn main:app --host 0.0.0.0 --port 8001 --reload
 
 # 2. 프론트엔드 빌드
 cd ../frontend
-npm install
+npm ci
 npm run build
 
 # 3. 브라우저에서 접속

@@ -6,16 +6,23 @@ Galaxy Pad records 30 seconds of video + internal-mic audio while a player handl
 
 ## Setup
 
+Prefer the one-command bootstrap from the repo root (installs uv, Python 3.12, all booth deps, frontend builds):
+
 ```bash
-# Backend
+bash scripts/bootstrap.sh
+```
+
+Or set up just this booth manually:
+
+```bash
+# Backend (uv auto-creates .venv/ and installs from uv.lock)
 cd booth-2-objects/backend
-python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt
+uv sync
 cp .env.example .env   # fill R2 credentials if QR sharing is needed
 
 # Frontend
 cd ../frontend
-npm install
+npm ci
 npm run build
 ```
 

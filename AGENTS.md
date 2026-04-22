@@ -44,10 +44,17 @@ This runs typecheck, backend import check, and tests. **If it passes silently, y
 ## Key Commands
 
 ```bash
-# Backend
+# Fresh Mac one-command setup (installs uv, Python 3.12, all deps)
+bash scripts/bootstrap.sh
+
+# Launch all 3 booths in parallel (logs in .omc/logs/)
+bash scripts/start-all.sh
+
+# Backend (per-booth, after bootstrap)
 cd program-a-reels-booth/backend
-.venv/bin/python -m pytest tests/ -q   # run tests
-.venv/bin/python -c "import main"       # import smoke test
+uv run pytest tests/ -q                 # run tests
+uv run python -c "import main"          # import smoke test
+uv run uvicorn main:app --reload        # dev server
 
 # Frontend
 cd program-a-reels-booth/frontend
@@ -57,6 +64,12 @@ npm run build                           # production build
 # Full verification
 bash scripts/verify.sh                  # all checks at once
 ```
+
+## Tooling
+
+- **Python:** 3.12, managed by `uv` (no pyenv, no system Python required).
+- **Backend deps:** declared in each booth's `backend/pyproject.toml`; locked in `backend/uv.lock` (committed).
+- **Virtualenv:** `.venv/` per booth backend, auto-created by `uv sync` on first `uv run`.
 
 ## Documentation Map
 

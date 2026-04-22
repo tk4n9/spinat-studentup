@@ -2,8 +2,9 @@
 __pycache__/
 *.py[cod]
 .venv/
-.venv*/
 *.egg-info/
+# NOTE: uv.lock files MUST be committed (reproducible installs on fresh Macs).
+# Do NOT add uv.lock to this ignore list.
 
 # Node
 node_modules/

@@ -1,15 +1,19 @@
 #!/usr/bin/env bash
-cd "$(dirname "$0")"
+# ── spinat 펌프 Booth (#3) — Program B 서버 시작 스크립트 ──────────────
+set -euo pipefail
 
-# venv naming: .venv_tk for user tk, .venv for user gtpv
-if [ -d ".venv_$(whoami)" ]; then
-  PYTHON=".venv_$(whoami)/bin/python"
-elif [ -d ".venv" ]; then
-  PYTHON=".venv/bin/python"
-else
-  echo "ERROR: No venv found. Run: python3 -m venv .venv_$(whoami) && .venv_$(whoami)/bin/pip install -r requirements.txt"
-  exit 1
-fi
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
 
-echo "Starting Program B (피아노 타일 펌프) on port 8001..."
-$PYTHON -m uvicorn main:app --host 0.0.0.0 --port 8001 --reload
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "  spinat 펌프 Booth (#3) — Program B"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+echo "  패드:           http://localhost:8001/pad"
+echo "  게임 모니터:    http://localhost:8001/game"
+echo "  전시 모니터:    http://localhost:8001/monitor"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+
+exec uv run uvicorn main:app --host 0.0.0.0 --port 8001 --reload
