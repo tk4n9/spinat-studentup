@@ -40,9 +40,9 @@ Three booths deploy independently on **geographically separated PCs**. No remote
 
 | Booth | Role | Directory | Port | Status |
 |---|---|---|---|---|
-| 1 | Performance (음원 + 촬영) | `program-a-reels-booth/` | 8000 | Complete (audio-overlay pending client spec) |
-| 2 | Objects (사물 수음) | `recording-booth/` (BOOTH_CONFIG=`config/booth-2.yaml`) | 8002 | Unified into recording-booth/ (US-003) |
-| 3 | Pump Game (발판 게임) | `program-b-pump-game/` | 8001 | Scaffolded — blocked on song + date |
+| 1 | Performance (음원 + 촬영) | `recording-booth/` (BOOTH_CONFIG=`config/booth-1.yaml`) | 8000 | Unified into recording-booth/ (US-001/US-002) |
+| 2 | Objects (사물 수음)       | `recording-booth/` (BOOTH_CONFIG=`config/booth-2.yaml`) | 8002 | Unified into recording-booth/ (US-003) |
+| 3 | Record (clone of 1)       | `recording-booth/` (BOOTH_CONFIG=`config/booth-3.yaml`) | 8001 | Unified into recording-booth/ (US-004). Pump-game archived under `archive/pump-game/`. |
 
 ---
 

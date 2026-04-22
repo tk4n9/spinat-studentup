@@ -10,8 +10,8 @@ Full spec: [PRD.md](PRD.md). Setup: [README.md](README.md).
 ## Verify
 
 ```bash
-cd program-a-reels-booth
-bash ../scripts/verify.sh       # full check
+cd recording-booth
+bash ../scripts/verify.sh       # full check (runs import smoke per booth + parametrized pytest)
 ```
 
 ## Backend (Python FastAPI)

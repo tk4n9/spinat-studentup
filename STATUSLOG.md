@@ -8,13 +8,65 @@ This file tracks the history of changes, decisions, and current status for all p
 
 | Booth | Directory | Status |
 |---|---|---|
-| Booth 1 — Performance (음원 + 촬영) | `program-a-reels-booth/` | 🟢 Complete (audio-overlay scope blocked on client spec) |
-| Booth 2 — Objects (사물 수음) | `booth-2-objects/` | 🟡 Scaffolded (fork of Program A, 30s fixed) |
-| Booth 3 — Record (pre-event triage) | `booth-3-record/` | 🟢 Clone of Booth 1, ready for event. Pump-game code archived under `archive/pump-game/` for post-event revival. |
+| Booth 1 — Performance (음원 + 촬영) | `recording-booth/` (BOOTH_CONFIG=`config/booth-1.yaml`) | 🟢 Unified 2026-04-22 (Ralph #5). Single codebase runs all 3 booths. |
+| Booth 2 — Objects (사물 수음)       | `recording-booth/` (BOOTH_CONFIG=`config/booth-2.yaml`) | 🟢 Unified 2026-04-22 (Ralph #5). Port 8002, single `오브제 챌린지` format. |
+| Booth 3 — Record                     | `recording-booth/` (BOOTH_CONFIG=`config/booth-3.yaml`) | 🟢 Unified 2026-04-22 (Ralph #5). Port 8001, 4-format clone of booth-1. Pump-game archived under `archive/pump-game/`. |
 
 ---
 
 ## Log
+
+---
+
+### 2026-04-22 — Ralph #5: Unify 3 booths into single `recording-booth/` codebase (Option B, user-accepted timeline risk)
+
+**User Prompt:**
+> Let's please go for the Option B. please start implementing the option B. You may change some directory names such as program-a-reels-booth. Do not care about the timeline conflict. /ralph just do it now.
+
+**Background:**
+Post-Path-C, the repo had three parallel booth trees (`program-a-reels-booth/`, `booth-2-objects/`, `booth-3-record/`) — a 2× byte-for-byte clone of Booth 1 plus a fork for Booth 2. Any bug fix had to land three times, any style change had to land three times. Plan `.omc/plans/unify-booths-v2.md` (consensus-approved over 3 critic iterations) prescribed Option B: collapse into one `recording-booth/` tree; three uvicorn processes still boot on their original ports (8000/8002/8001 — non-monotonic by design, preserves iPad QR codes already circulating); identity is selected per process by `BOOTH_CONFIG=recording-booth/config/booth-{1,2,3}.yaml`. Plan Principle 3 + US-15 required a ≥3-day buffer between unify-merge and event, which the timeline did not meet (event 2026-04-24, rehearsal 2026-04-23). Risk was surfaced explicitly at Ralph-session start; user waived the buffer with "Do not care about the timeline conflict" — timeline ownership now user-side.
+
+**Actions Taken:**
+
+Starting commit: `24c3f4c` (Path C — booth-3 clone of booth-1, pump-game archived).
+Commit chain (this session):
+
+1. **`021d04a` — US-001/US-002: rename + Pydantic config loader.** `git mv program-a-reels-booth recording-booth`; rewrote `recording-booth/backend/config.py` as a Pydantic v2 model (`BoothConfig` with nested `BoothSection`, `ServerSection`, `SessionSection`, `ThemeSection`, `FormatSpec`, `R2Section`, `StorageSection`). `BOOTH_CONFIG` env var is required — `config.py` raises `SystemExit(2)` with a recognizable error message on missing env var or ValidationError (fail-loud per plan US-14). `FormatSpec` schema matches reality (`id/label/duration_seconds/music_file/music_start_offset`), not the plan draft's `width/height/fps` — plan was authored before live-config inspection; reconciled at implementation time. R2 `bucket/public_url/key_prefix` moved to YAML (public); `R2_ACCOUNT_ID / R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY` stayed in `.env` (secrets). Old top-level `config.yaml` deleted.
+
+2. **`af1ec38` — US-003: collapse booth-2-objects.** Wrote `recording-booth/config/booth-2.yaml` (port 8002, booth.id=2, `booth.name: objects`, single `오브제 챌린지` format preserved, `storage.r2.key_prefix: 'videos/booth-2/'` — preserves existing R2 URLs). `git rm -r booth-2-objects`. `scripts/start-all.sh` booth-2 invocation rewritten to point at unified backend.
+
+3. **`c4795a0` — US-004: onboard booth-3 + deduplicate bootstrap.** `recording-booth/config/booth-3.yaml` (port 8001, booth.id=3, 4-format clone of booth-1, `videos/booth-3/` prefix). `git rm -r booth-3-record`. `scripts/bootstrap.sh` BOOTHS array reduced to single `recording-booth` entry — one `uv sync`, one `npm ci && npm run build`. `scripts/start-all.sh` loop iterates `1 2 3`, all launching from `recording-booth/backend` with per-booth `BOOTH_CONFIG` exported. Dedup victory: frontend build dropped from 3× to 1×.
+
+4. **`b0bbfb8` — US-005: frontend runtime theme via `/api/booth`.** New `routers/booth.py` returns `{id, name, theme: {primary, accent, startCopy}}` from the loaded `BoothConfig` (camelCase on the wire). React fetches on mount via a Zustand store with an idempotent fetch guard; `StartScreen.tsx` now renders `startCopy` from the fetched config instead of a hardcoded Korean literal. CSS custom properties `--theme-primary`/`--theme-accent` set on `document.documentElement` from the fetched theme. Vite dev proxy reads `VITE_BOOTH` (1→:8000, 2→:8002, 3→:8001). Single `dist/` serves all 3 booths.
+
+5. **`1f0a558` — US-006: idempotent storage migration.** `scripts/migrate-storage.sh` moves pre-unify storage into `recording-booth/backend/storage/booth-{1,2,3}/`, preserves `counter.json` bitwise, scaffolds booth-3 with `{"counter": 0}`. Backup tarball `.backup-$(date +%s).tar.gz` is written only on mutation runs (no spam on no-op reruns). `.gitignore` updated: `booth-*/*` (contents pattern, not `booth-*/` which blocks git descent) + allow-rule `!.../booth-*/.gitkeep`. 3rd/4th runs confirm idempotency.
+
+6. **`d202a47` — US-007: parametrized pytest over 3 booth configs.** `recording-booth/backend/tests/conftest.py` adds `booth_id` fixture (`params=[1,2,3]`). `tests/test_booth_identity.py` spawns a fresh python subprocess per test (4 tests × 3 booths = 12 instances) because `config.py` freezes `@dataclass(frozen=True) PATHS` and caches `CONFIG` at import — `importlib.reload()` can't reset that safely. Subprocess inherits the full parent env (`{**os.environ, "BOOTH_CONFIG": str(yaml)}`), preserving `VIRTUAL_ENV` / `PYTHONHOME` that uv set up. `scripts/verify.sh` refactored: `check_backend_import()` loops per-booth (catches YAML typos in any single booth config at verify time); `check_backend_tests()` runs pytest once with a booth-1 baseline; the fixture handles iteration inside. 24 tests passing.
+
+**Open (post-commit chain):**
+- **US-008**: this STATUSLOG entry + CLAUDE.md / AGENTS.md / ARCHITECTURE.md stale-ref sweep + archive/README.md preamble.
+- **US-009**: architect THOROUGH-tier reviewer verification against all 34 acceptance criteria across US-001 → US-008.
+- **US-010**: fresh-Mac rehearsal in `/tmp/` via `rsync` → `bootstrap.sh` → `start-all.sh` → `curl 200` × 3 + `/api/booth` identity verification → teardown.
+
+**Scope Notes:**
+- Plan's optional follow-ups (features/{record,objects}/ plugin mount-points, per-feature routers) are **not** implemented in this ralph session — would require moving business logic, which the 3-day-buffer shortfall made too risky. US-001 through US-010 preserve the existing router/service layout unchanged; plugin extraction is a post-event refactor.
+- `recording-booth/PRD.md` still reads as "Program A: 릴스 Booth" (a historical planning artifact — same precedent as requirements.txt references in prior PRDs per 2026-04-22 uv-migration entry). Will be superseded by a post-unify PRD rewrite after the event.
+- Pump-game revival path (under `archive/pump-game/`) is unchanged: the 5-step checklist in `archive/README.md` still works, now with a note that post-unify the code should land under `recording-booth/features/game/`.
+
+**Verification:**
+- `bash scripts/verify.sh`: EXIT=0 (silent pass: 3× per-booth import smoke + 24 pytest tests + frontend tsc + vite build).
+- Manual smoke (logged to `.omc/progress.txt`): `curl http://localhost:{8000,8002,8001}/api/booth` each returns `{id: n, name, theme: {…}}` with the right per-booth identity.
+- Fresh-Mac rehearsal outcome pending in US-010.
+
+**Principle 3 Waiver:**
+Plan `.omc/plans/unify-booths-v2.md` Principle 3 requires ≥3 days between unify-merge and event. Today is 2026-04-22, event is 2026-04-24 — buffer is ≤48h. User explicitly waived at session start. Mitigation: US-010 fresh-Mac rehearsal in /tmp/ before event; per-booth YAML typos surface at `scripts/verify.sh` time (US-007 import smoke). Timeline ownership is now user-side; Ralph delivered the unified codebase per the consensus plan.
+
+**Files Changed (chain summary):**
+- Renamed: `program-a-reels-booth/` → `recording-booth/` (git mv, preserves history).
+- Deleted: `booth-2-objects/`, `booth-3-record/`.
+- Added: `recording-booth/config/booth-{1,2,3}.yaml`, `recording-booth/backend/routers/booth.py`, `recording-booth/backend/tests/conftest.py`, `recording-booth/backend/tests/test_booth_identity.py`, `scripts/migrate-storage.sh`, `recording-booth/backend/storage/booth-{1,2,3}/.gitkeep`.
+- Rewritten: `recording-booth/backend/config.py` (Pydantic), `scripts/bootstrap.sh`, `scripts/start-all.sh`, `scripts/verify.sh`.
+- Modified (US-008 doc sweep, this commit): `STATUSLOG.md`, `CLAUDE.md`, `AGENTS.md`, `ARCHITECTURE.md`, `recording-booth/AGENTS.md`, `archive/README.md`.
 
 ---
 

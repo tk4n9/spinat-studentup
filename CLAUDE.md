@@ -27,23 +27,27 @@ Each booth's backend is a self-contained uv project: `pyproject.toml` + `uv.lock
 # First-time (any fresh Mac)
 bash scripts/bootstrap.sh
 
-# Per-booth dev loop
-cd program-a-reels-booth/backend
-uv run uvicorn main:app --reload --port 8000    # start
-uv run pytest tests/ -q                          # tests
-uv run python -c "import main"                   # smoke test
+# Per-booth dev loop — one codebase, BOOTH_CONFIG selects identity
+cd recording-booth/backend
+BOOTH_CONFIG=../config/booth-1.yaml \
+  uv run uvicorn main:app --reload --port 8000                  # booth-1 (port 8000)
+BOOTH_CONFIG=../config/booth-1.yaml uv run pytest tests/ -q     # tests (fixture iterates 1,2,3)
+BOOTH_CONFIG=../config/booth-1.yaml uv run python -c "import main"  # smoke test
+# Swap to booth-2 (port 8002) or booth-3 (port 8001) by changing BOOTH_CONFIG.
 
-# Adding a dependency
-cd <booth>/backend
+# Adding a dependency (affects all 3 booths — single pyproject)
+cd recording-booth/backend
 uv add <package>                                 # updates pyproject + uv.lock
 ```
 
 ## Frontend
 
 ```bash
-cd program-a-reels-booth/frontend
+cd recording-booth/frontend
 ./node_modules/.bin/tsc --noEmit        # typecheck
-npm run build                           # production build
+npm run build                           # production build (single dist serves all 3 booths)
+# Dev mode with live reload against a specific booth backend:
+VITE_BOOTH=1 npm run dev                # proxies /api/* to http://localhost:8000
 ```
 
 ## Event-day workflow (fresh MacBook)

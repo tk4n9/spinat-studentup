@@ -22,9 +22,9 @@ This runs typecheck, backend import check, and tests. **If it passes silently, y
 
 | Booth | Directory | AGENTS.md / PRD | Status |
 |---|---|---|---|
-| 1 — Performance (음원 + 촬영) | `program-a-reels-booth/` | [AGENTS.md](program-a-reels-booth/AGENTS.md) | Complete (audio-overlay scope pending client spec) |
-| 2 — Objects (사물 수음) | `recording-booth/` (BOOTH_CONFIG=`config/booth-2.yaml`) | [AGENTS.md](recording-booth/AGENTS.md) | Unified into recording-booth/ (single-codebase 3-booth app, US-003) |
-| 3 — Pump Game (발판 게임) | `program-b-pump-game/` | [PRD.md](program-b-pump-game/PRD.md) | Planning complete, blocked on song + date |
+| 1 — Performance (음원 + 촬영) | `recording-booth/` (BOOTH_CONFIG=`config/booth-1.yaml`) | [AGENTS.md](recording-booth/AGENTS.md) | Unified into recording-booth/ (US-001/US-002) |
+| 2 — Objects (사물 수음)       | `recording-booth/` (BOOTH_CONFIG=`config/booth-2.yaml`) | [AGENTS.md](recording-booth/AGENTS.md) | Unified into recording-booth/ (US-003) |
+| 3 — Record (clone of 1)       | `recording-booth/` (BOOTH_CONFIG=`config/booth-3.yaml`) | [AGENTS.md](recording-booth/AGENTS.md) | Unified into recording-booth/ (US-004). Pump-game archived under `archive/pump-game/`. |
 
 ## Architecture Constraints
 
@@ -50,16 +50,18 @@ bash scripts/bootstrap.sh
 # Launch all 3 booths in parallel (logs in .omc/logs/)
 bash scripts/start-all.sh
 
-# Backend (per-booth, after bootstrap)
-cd program-a-reels-booth/backend
-uv run pytest tests/ -q                 # run tests
-uv run python -c "import main"          # import smoke test
-uv run uvicorn main:app --reload        # dev server
+# Backend — single codebase, per-booth via BOOTH_CONFIG env var
+cd recording-booth/backend
+BOOTH_CONFIG=../config/booth-1.yaml uv run pytest tests/ -q         # booth-1 tests
+BOOTH_CONFIG=../config/booth-1.yaml uv run python -c "import main"  # import smoke
+BOOTH_CONFIG=../config/booth-1.yaml \
+  uv run uvicorn main:app --reload --port 8000                      # booth-1 dev server
+# Swap to booth-2 (port 8002) or booth-3 (port 8001) by changing BOOTH_CONFIG.
 
-# Frontend
-cd program-a-reels-booth/frontend
+# Frontend (single build, identity fetched at runtime via /api/booth)
+cd recording-booth/frontend
 ./node_modules/.bin/tsc --noEmit        # typecheck
-npm run build                           # production build
+npm run build                           # production build (one dist for all 3 booths)
 
 # Full verification
 bash scripts/verify.sh                  # all checks at once
@@ -77,6 +79,7 @@ bash scripts/verify.sh                  # all checks at once
 |---|---|
 | [STATUSLOG.md](STATUSLOG.md) | Change history, decisions, current status |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Layer constraints, dependency rules |
-| [program-a-reels-booth/PRD.md](program-a-reels-booth/PRD.md) | Full product requirements |
-| [program-a-reels-booth/AGENTS.md](program-a-reels-booth/AGENTS.md) | Program-specific agent guide |
-| [program-a-reels-booth/README.md](program-a-reels-booth/README.md) | Setup & deployment |
+| [recording-booth/PRD.md](recording-booth/PRD.md) | Full product requirements (historical — describes original program-a scope) |
+| [recording-booth/AGENTS.md](recording-booth/AGENTS.md) | Unified backend/frontend agent guide |
+| [recording-booth/README.md](recording-booth/README.md) | Setup & deployment |
+| [recording-booth/config/booth-{1,2,3}.yaml](recording-booth/config/) | Per-booth runtime config selected via `BOOTH_CONFIG` env var |

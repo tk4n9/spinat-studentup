@@ -2,6 +2,8 @@
 
 Dormant code preserved for post-event revival. Not wired into `scripts/bootstrap.sh`, `scripts/start-all.sh`, or `scripts/verify.sh`.
 
+> **Post-unification 2026-04-22** — the `recording-booth/` single-codebase app replaced `program-a-reels-booth/`, `booth-2-objects/`, and `booth-3-record/`. Three uvicorn processes now boot from one source tree, selected by `BOOTH_CONFIG=recording-booth/config/booth-{1,2,3}.yaml`. Pump-game revival (section below) should land code under `recording-booth/features/game/` or as a standalone sidecar service per plan Section 11 follow-up 3 (`.omc/plans/unify-booths-v2.md`).
+
 ## pump-game/
 
 Archived 2026-04-22 (pre-event triage). Revival recipe below; post-event unification plan at `.omc/plans/unify-booths-v2.md`.
