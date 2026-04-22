@@ -1,40 +1,48 @@
 #!/usr/bin/env bash
 # ── Launch all 3 booth servers in parallel with log capture ──────────────
+# All booths run off the single recording-booth/ codebase; per-booth identity
+# is selected by BOOTH_CONFIG env, port is read from the YAML via yq so the
+# config stays the single source of truth.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LOG_DIR="$ROOT/.omc/logs"
+BACKEND="$ROOT/recording-booth/backend"
+CONFIG_DIR="$ROOT/recording-booth/config"
 mkdir -p "$LOG_DIR"
 
+if ! command -v yq >/dev/null 2>&1; then
+  echo "✗ yq not on PATH — run bash scripts/bootstrap.sh first" >&2
+  exit 1
+fi
+
 # Launch one booth uvicorn in the background; echoes the child pid for reaping.
-# booth_config: optional absolute path to the YAML config (recording-booth only for now;
-#               empty string leaves BOOTH_CONFIG unset for legacy booth-2/booth-3 backends
-#               that still read config.yaml directly).
 start_booth() {
-  local backend_dir="$1" port="$2" log_name="$3" booth_config="${4:-}"
+  local n="$1"
+  local cfg="$CONFIG_DIR/booth-$n.yaml"
+  local port
+  port="$(yq '.booth.port' "$cfg")"
   (
-    cd "$backend_dir"
-    if [ -n "$booth_config" ]; then
-      BOOTH_CONFIG="$booth_config" uv run uvicorn main:app --host 0.0.0.0 --port "$port"
-    else
-      uv run uvicorn main:app --host 0.0.0.0 --port "$port"
-    fi
-  ) > "$LOG_DIR/$log_name.log" 2>&1 &
+    cd "$BACKEND"
+    BOOTH_CONFIG="$cfg" uv run uvicorn main:app --host 0.0.0.0 --port "$port"
+  ) > "$LOG_DIR/booth-$n.log" 2>&1 &
   echo "$!"
 }
 
 pids=()
-pids+=("$(start_booth "$ROOT/recording-booth/backend" 8000 booth-1 "$ROOT/recording-booth/config/booth-1.yaml")")
-pids+=("$(start_booth "$ROOT/recording-booth/backend" 8002 booth-2 "$ROOT/recording-booth/config/booth-2.yaml")")
-pids+=("$(start_booth "$ROOT/booth-3-record/backend"        8001 booth-3)")
+ports=()
+for n in 1 2 3; do
+  pids+=("$(start_booth "$n")")
+  ports+=("$(yq '.booth.port' "$CONFIG_DIR/booth-$n.yaml")")
+done
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  spinat-studentup — all booths running"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
-echo "  Booth 1 (Performance):  http://localhost:8000   pid=${pids[0]}"
-echo "  Booth 2 (Objects):      http://localhost:8002   pid=${pids[1]}"
-echo "  Booth 3 (Record):       http://localhost:8001   pid=${pids[2]}"
+echo "  Booth 1 (Performance):  http://localhost:${ports[0]}   pid=${pids[0]}"
+echo "  Booth 2 (Objects):      http://localhost:${ports[1]}   pid=${pids[1]}"
+echo "  Booth 3 (Record):       http://localhost:${ports[2]}   pid=${pids[2]}"
 echo ""
 echo "  Logs:  $LOG_DIR/booth-{1,2,3}.log"
 echo "  Stop: Ctrl+C (this script reaps all children)"

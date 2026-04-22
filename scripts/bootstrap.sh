@@ -11,7 +11,22 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-BOOTHS=(recording-booth booth-3-record)
+# Single unified backend + frontend tree. Per-booth identity selected at
+# launch time via BOOTH_CONFIG env (see scripts/start-all.sh).
+BOOTHS=(recording-booth)
+
+# ── 0. yq (used by start-all.sh to read booth.port out of YAML configs) ─
+# Install early so failures surface before we touch Python/Node.
+if ! command -v yq >/dev/null 2>&1; then
+  if command -v brew >/dev/null 2>&1; then
+    echo "→ yq not found; installing via Homebrew..."
+    brew install yq >/dev/null
+  else
+    echo "✗ yq missing and Homebrew unavailable — install yq manually (https://github.com/mikefarah/yq)" >&2
+    exit 1
+  fi
+fi
+echo "→ yq: $(yq --version)"
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  spinat-studentup — bootstrap"

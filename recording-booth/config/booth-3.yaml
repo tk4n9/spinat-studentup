@@ -1,0 +1,51 @@
+# Booth 3 — Record (pre-event triage clone of booth-1).
+# Identical recording pipeline to booth-1; inherits the 4-challenge format
+# list. Port 8001 preserved from Path C so iPad bookmarks stay valid.
+
+booth:
+  id: 3
+  name: "booth-3"
+  port: 8001
+
+server:
+  host: "0.0.0.0"
+  storage_path: "./storage/booth-3"
+  frontend_dist: "../frontend/dist"
+
+session:
+  counter_file: "./storage/booth-3/counter.json"
+
+theme:
+  primary: "#FF6B6B"
+  accent: "#4ECDC4"
+  start_copy: "시작하기"
+
+formats:
+  - id: 1
+    label: "챌린지 1"
+    duration_seconds: 30
+    music_file: null
+    music_start_offset: 0
+  - id: 2
+    label: "챌린지 2"
+    duration_seconds: 30
+    music_file: null
+    music_start_offset: 0
+  - id: 3
+    label: "챌린지 3"
+    duration_seconds: 30
+    music_file: null
+    music_start_offset: 0
+  - id: 4
+    label: "챌린지 4"
+    duration_seconds: 30
+    music_file: null
+    music_start_offset: 0
+
+storage:
+  r2:
+    bucket: "spinat-reels-booth"
+    public_url: ""
+    # Must match pre-unify key format `videos/booth-3/{video_id}{ext}`
+    # so any R2 objects uploaded from the Path C clone remain addressable.
+    key_prefix: "videos/booth-3/"
