@@ -36,3 +36,18 @@ export interface WsMessage {
   filename?: string;
   url?: string;
 }
+
+/**
+ * Runtime config served by the backend at GET /api/booth.
+ * Drives per-booth theme injection under the unified recording-booth app.
+ * Keys are camelCase on the wire (backend main.py assembles them that way).
+ */
+export interface BoothConfig {
+  id: number;
+  name: string;
+  theme: {
+    primary: string;
+    accent: string;
+    startCopy: string;
+  };
+}

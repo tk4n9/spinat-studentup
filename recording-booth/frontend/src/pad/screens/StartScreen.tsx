@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useSessionStore } from '../store/sessionStore';
+import { useBoothStore } from '../../store/boothStore';
 import { api } from '../../api/endpoints';
 import type { Format } from '../../types';
 
 export default function StartScreen() {
   const { challengerCount, setChallengerCount, setSelectedFormat, setScreen } = useSessionStore();
+  const boothConfig = useBoothStore((s) => s.config);
   const [formats, setFormats] = useState<Format[]>([]);
   const [selectedId, setSelectedId] = useState<number>(1);
   const [loading, setLoading] = useState(true);
@@ -71,18 +73,22 @@ export default function StartScreen() {
         </div>
       )}
 
-      {/* START button */}
+      {/* START button — copy comes from the per-booth theme so operators can
+          swap labels (English "START" vs Korean "시작하기") without a rebuild. */}
       <button
         onClick={handleStart}
         className="w-48 h-48 rounded-full bg-white text-black text-4xl font-black
                    shadow-[0_0_60px_rgba(255,255,255,0.3)]
                    active:scale-95 transition-transform select-none"
       >
-        START
+        {boothConfig?.theme.startCopy ?? 'START'}
       </button>
 
-      {/* spinat branding */}
-      <p className="text-white/20 text-xs tracking-widest">@spinat.official</p>
+      {/* spinat branding — booth name acts as a disambiguator suffix so the
+          single Vite dist still shows which booth the operator is on. */}
+      <p className="text-white/20 text-xs tracking-widest">
+        @spinat.official{boothConfig ? ` · ${boothConfig.name}` : ''}
+      </p>
     </div>
   );
 }

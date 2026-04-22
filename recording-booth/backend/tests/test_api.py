@@ -64,11 +64,15 @@ def test_counter_increments(client):
 
 
 def test_formats_returns_list(client):
+    # Count comes from the active BOOTH_CONFIG, not a hardcoded literal —
+    # booth-2 ships 1 format ("오브제 챌린지"), booths 1/3 ship 4. Asserting
+    # against CONFIG makes the test shape-agnostic across all three configs.
     r = client.get("/api/session/formats")
     assert r.status_code == 200
     fmts = r.json()
     assert isinstance(fmts, list)
-    assert len(fmts) == 4
+    assert len(fmts) == len(CONFIG.formats)
+    assert len(fmts) >= 1
     assert all("id" in f and "duration_seconds" in f for f in fmts)
 
 

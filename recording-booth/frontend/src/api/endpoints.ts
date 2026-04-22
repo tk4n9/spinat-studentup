@@ -1,7 +1,10 @@
 import { apiFetch } from './client';
-import type { UploadResult, FinalizeResult, DisplayVideo, Format } from '../types';
+import type { UploadResult, FinalizeResult, DisplayVideo, Format, BoothConfig } from '../types';
 
 export const api = {
+  getBoothConfig: () =>
+    apiFetch<BoothConfig>('/api/booth'),
+
   getCounter: () =>
     apiFetch<{ count: number }>('/api/session/counter'),
 
