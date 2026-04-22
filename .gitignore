@@ -15,15 +15,21 @@ dist/
 .env
 *.env.local
 
-# Storage (videos are local to each deployment)
-program-a-reels-booth/backend/storage/display/
-program-a-reels-booth/backend/storage/instagram/
-program-a-reels-booth/backend/storage/temp/
-!program-a-reels-booth/backend/storage/.gitkeep
-
-# Program B storage (scores are ephemeral per deployment)
-program-b-pump-game/backend/storage/scores/
-!program-b-pump-game/backend/storage/scores/.gitkeep
+# Storage (videos + counter state are local to each deployment).
+# Layout is unified under recording-booth/backend/storage/booth-{1,2,3}/
+# per .omc/plans/unify-booths-v2.md US-006. Contents ignored, but the
+# booth-N/ scaffold itself is tracked via a committed .gitkeep so the
+# directory structure survives a fresh clone.
+#
+# Note on the glob: we ignore `booth-*/*` (contents) not `booth-*/`
+# (the directory itself). If the directory were ignored, git wouldn't
+# descend into it and the `!…/.gitkeep` negation below would be
+# silently ineffective — a common gitignore pitfall.
+recording-booth/backend/storage/booth-*/*
+!recording-booth/backend/storage/booth-*/.gitkeep
+# Pre-migration tarballs produced by scripts/migrate-storage.sh — the
+# script writes one per run before any mutation.
+recording-booth/backend/storage/.backup-*.tar.gz
 
 # OS
 .DS_Store
