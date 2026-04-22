@@ -7,25 +7,25 @@ import type { Format } from '../../types';
 export default function StartScreen() {
   const { challengerCount, setChallengerCount, setSelectedFormat, setScreen } = useSessionStore();
   const boothConfig = useBoothStore((s) => s.config);
-  const [formats, setFormats] = useState<Format[]>([]);
-  const [selectedId, setSelectedId] = useState<number>(1);
+  // Single-format flow across all booths. Per-booth format selection now
+  // lives in YAML (formats[0] is the active challenge). Operators swap
+  // challenges by editing recording-booth/config/booth-N.yaml + restart.
+  const [format, setFormat] = useState<Format | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([api.getCounter(), api.getFormats()])
       .then(([{ count }, fmts]) => {
         setChallengerCount(count);
-        setFormats(fmts);
-        setSelectedId(fmts[0]?.id ?? 1);
+        setFormat(fmts[0] ?? null);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [setChallengerCount]);
 
   const handleStart = () => {
-    const fmt = formats.find((f) => f.id === selectedId) ?? formats[0];
-    if (!fmt) return;
-    setSelectedFormat(fmt);
+    if (!format) return;
+    setSelectedFormat(format);
     setScreen('COUNTDOWN');
   };
 
@@ -49,32 +49,10 @@ export default function StartScreen() {
         </h1>
       </div>
 
-      {/* Format selector (shown only if multiple formats) */}
-      {formats.length > 1 && (
-        <div className="flex flex-col gap-3 w-full max-w-xs">
-          <p className="text-white/70 text-sm text-center">챌린지 선택</p>
-          <div className="grid grid-cols-2 gap-2">
-            {formats.map((f) => (
-              <button
-                key={f.id}
-                onClick={() => setSelectedId(f.id)}
-                className={`py-3 px-4 rounded-xl text-sm font-bold transition-all ${
-                  selectedId === f.id
-                    ? 'bg-white text-black'
-                    : 'bg-white/10 text-white border border-white/20'
-                }`}
-              >
-                {f.label}
-                <br />
-                <span className="font-normal text-xs opacity-70">{f.duration_seconds}초</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* START button — copy comes from the per-booth theme so operators can
-          swap labels (English "START" vs Korean "시작하기") without a rebuild. */}
+          swap labels (English "START" vs Korean "시작하기") without a rebuild.
+          Challenge selector intentionally removed: formats[0] is the canonical
+          challenge per booth, configured in recording-booth/config/booth-N.yaml. */}
       <button
         onClick={handleStart}
         className="w-48 h-48 rounded-full bg-white text-black text-4xl font-black
