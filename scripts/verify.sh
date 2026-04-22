@@ -11,7 +11,25 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 FAIL=0
 
+# One-time uv availability check (instead of per-booth repetition).
+UV_OK=1
+if ! command -v uv >/dev/null 2>&1; then
+  UV_OK=0
+  echo "SKIP: uv not on PATH — all backend checks skipped (run bash scripts/bootstrap.sh)" >&2
+fi
+
 fail() { echo "FAIL: $1" >&2; FAIL=1; }
+
+# Run a step silently on success; replay captured output only on failure.
+# This is what makes the whole script silent-on-pass per the docstring.
+run_silent() {
+  local label="$1"; shift
+  local out
+  if ! out="$("$@" 2>&1)"; then
+    echo "$out" >&2
+    fail "$label"
+  fi
+}
 
 # ── Backend check (uv-based) ────────────────────────────────
 check_backend() {
@@ -21,19 +39,16 @@ check_backend() {
     echo "SKIP: $name backend (pyproject.toml or uv.lock missing — run bash scripts/bootstrap.sh)" >&2
     return 0
   fi
-  if ! command -v uv >/dev/null 2>&1; then
-    echo "SKIP: $name backend (uv not on PATH — run bash scripts/bootstrap.sh)" >&2
+  if [ "$UV_OK" -eq 0 ]; then
     return 0
   fi
 
-  # Import smoke test
-  (cd "$dir" && uv run --frozen python -c "import main" 2>/dev/null) \
-    || fail "$name backend import"
+  run_silent "$name backend import" \
+    bash -c "cd '$dir' && uv run --frozen python -c 'import main'"
 
-  # Pytest (only if tests exist)
   if [ -d "$dir/tests" ] && ls "$dir/tests"/test_*.py 1>/dev/null 2>&1; then
-    (cd "$dir" && uv run --frozen pytest tests/ -q --tb=short 2>&1) \
-      || fail "$name backend tests"
+    run_silent "$name backend tests" \
+      bash -c "cd '$dir' && uv run --frozen pytest tests/ -q --tb=short"
   fi
 }
 
@@ -47,8 +62,10 @@ check_frontend() {
   fi
 
   local tsc="$dir/node_modules/.bin/tsc"
-  (cd "$dir" && "$tsc" --noEmit 2>&1) || fail "$name frontend typecheck"
-  (cd "$dir" && npm run build --silent 2>&1) || fail "$name frontend build"
+  run_silent "$name frontend typecheck" \
+    bash -c "cd '$dir' && '$tsc' --noEmit"
+  run_silent "$name frontend build" \
+    bash -c "cd '$dir' && npm run build --silent"
 }
 
 # ── Run checks for all 3 booths ─────────────────────────────

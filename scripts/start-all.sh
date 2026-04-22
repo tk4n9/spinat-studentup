@@ -6,7 +6,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LOG_DIR="$ROOT/.omc/logs"
 mkdir -p "$LOG_DIR"
 
-# Booth spec: (dir, port, log_name)
+# Launch one booth uvicorn in the background; echoes the child pid for reaping.
 start_booth() {
   local backend_dir="$1" port="$2" log_name="$3"
   (
