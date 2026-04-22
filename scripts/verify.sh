@@ -31,9 +31,11 @@ run_silent() {
   fi
 }
 
-# ── Backend check (uv-based) ────────────────────────────────
-# extra_env: optional "KEY=val" prefix for the subprocess (e.g. BOOTH_CONFIG=...)
-check_backend() {
+# ── Backend import-smoke (per booth) ────────────────────────
+# Per-booth `import main` run so a typo in any booth-N.yaml surfaces
+# at verify time, not at event time. extra_env: "KEY=val" prefix for
+# the subprocess (BOOTH_CONFIG=...).
+check_backend_import() {
   local name="$1" dir="$2" extra_env="${3:-}"
 
   if [ ! -f "$dir/pyproject.toml" ] || [ ! -f "$dir/uv.lock" ]; then
@@ -46,11 +48,29 @@ check_backend() {
 
   run_silent "$name backend import" \
     bash -c "cd '$dir' && $extra_env uv run --frozen python -c 'import main'"
+}
 
-  if [ -d "$dir/tests" ] && ls "$dir/tests"/test_*.py 1>/dev/null 2>&1; then
-    run_silent "$name backend tests" \
-      bash -c "cd '$dir' && $extra_env uv run --frozen pytest tests/ -q --tb=short"
+# ── Backend pytest (run once; fixture parametrises per booth) ──────
+# US-007: tests/conftest.py supplies a booth_id fixture that iterates
+# {1,2,3} and tests/test_booth_identity.py uses subprocesses to assert
+# per-booth values. So pytest itself runs once here with a baseline
+# BOOTH_CONFIG (booth-1.yaml) for test_api.py's module-level imports;
+# the parameterised fixture handles the rest.
+check_backend_tests() {
+  local dir="$1" extra_env="$2"
+
+  if [ ! -f "$dir/pyproject.toml" ] || [ ! -f "$dir/uv.lock" ]; then
+    return 0
   fi
+  if [ "$UV_OK" -eq 0 ]; then
+    return 0
+  fi
+  if [ ! -d "$dir/tests" ] || ! ls "$dir/tests"/test_*.py 1>/dev/null 2>&1; then
+    return 0
+  fi
+
+  run_silent "backend tests" \
+    bash -c "cd '$dir' && $extra_env uv run --frozen pytest tests/ -q --tb=short"
 }
 
 # ── Frontend check ──────────────────────────────────────────
@@ -69,14 +89,20 @@ check_frontend() {
     bash -c "cd '$dir' && npm run build --silent"
 }
 
-# ── Run checks for all 3 booths ─────────────────────────────
-# Unified recording-booth app: one backend tree + one frontend dist, launched
-# per-booth via BOOTH_CONFIG env. Iterate all 3 booth configs so a typo in any
-# booth-N.yaml surfaces at verify time, not at event time.
+# ── Run checks for the unified recording-booth app ──────────
+# One backend tree + one frontend dist, launched per-booth via BOOTH_CONFIG
+# at event time. Verify does two things:
+#   1. Import-smoke per booth — catches YAML typos early.
+#   2. Pytest once — the booth_id fixture in tests/conftest.py iterates
+#      {1,2,3} for tests that care; tests that don't run once under the
+#      booth-1 baseline.
+BACKEND_DIR="$ROOT/recording-booth/backend"
 for n in 1 2 3; do
-  check_backend  "booth-$n" "$ROOT/recording-booth/backend" \
+  check_backend_import "booth-$n" "$BACKEND_DIR" \
     "BOOTH_CONFIG=$ROOT/recording-booth/config/booth-$n.yaml"
 done
+check_backend_tests "$BACKEND_DIR" \
+  "BOOTH_CONFIG=$ROOT/recording-booth/config/booth-1.yaml"
 check_frontend "recording-booth" "$ROOT/recording-booth/frontend"
 
 # ── Result ──────────────────────────────────────────────────
