@@ -4,9 +4,10 @@ import path from 'path';
 
 /**
  * VITE_BOOTH selects which local backend the dev server proxies to.
- *   VITE_BOOTH=1 → :8000 (booth-1 / performance)
- *   VITE_BOOTH=2 → :8002 (booth-2 / objects)
- *   VITE_BOOTH=3 → :8001 (booth-3 / record)
+ *   VITE_BOOTH=1 → :8000 (booth-1 / violin)
+ *   VITE_BOOTH=2 → :8002 (booth-2 / biotron)
+ *   VITE_BOOTH=3 → :8001 (booth-3 / playtron)
+ *   VITE_BOOTH=4 → :8003 (booth-4 / beethoven)
  * Unset → defaults to :8000 (booth-1).
  *
  * Production does not use vite.config at runtime (FastAPI serves dist/),
@@ -14,8 +15,9 @@ import path from 'path';
  *
  * Port mapping is intentional (non-monotonic): booth-3 sits on :8001 for
  * historical compatibility with iPad bookmarks from the Path C clone.
+ * Booth-4 grabs the next free port (8003).
  */
-const BOOTH_PORTS: Record<string, number> = { '1': 8000, '2': 8002, '3': 8001 };
+const BOOTH_PORTS: Record<string, number> = { '1': 8000, '2': 8002, '3': 8001, '4': 8003 };
 
 export default defineConfig(() => {
   const boothId = process.env.VITE_BOOTH ?? '1';

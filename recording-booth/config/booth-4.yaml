@@ -1,0 +1,35 @@
+# Booth 4 — beethoven.
+# Added post-unify; mirrors the single-format flow used by booths 1-3.
+# Port 8003 picked to avoid 8000/8001/8002 (already assigned).
+
+booth:
+  id: 4
+  name: "beethoven"
+  port: 8003
+
+server:
+  host: "0.0.0.0"
+  storage_path: "./storage/booth-4"
+  frontend_dist: "../frontend/dist"
+
+session:
+  counter_file: "./storage/booth-4/counter.json"
+
+theme:
+  primary: "#FF6B6B"
+  accent: "#4ECDC4"
+  start_copy: "시작하기"
+
+formats:
+  - id: 1
+    label: "챌린지"
+    duration_seconds: 30
+    music_file: null
+    music_start_offset: 0
+
+storage:
+  r2:
+    bucket: "spinat-reels-booth"
+    public_url: ""
+    # New booth → new key prefix. No legacy URLs to preserve here.
+    key_prefix: "videos/booth-4/"

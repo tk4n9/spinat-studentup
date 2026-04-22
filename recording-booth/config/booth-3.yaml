@@ -4,7 +4,7 @@
 
 booth:
   id: 3
-  name: "booth-3"
+  name: "playtron"
   port: 8001
 
 server:

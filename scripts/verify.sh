@@ -97,7 +97,7 @@ check_frontend() {
 #      {1,2,3} for tests that care; tests that don't run once under the
 #      booth-1 baseline.
 BACKEND_DIR="$ROOT/recording-booth/backend"
-for n in 1 2 3; do
+for n in 1 2 3 4; do
   check_backend_import "booth-$n" "$BACKEND_DIR" \
     "BOOTH_CONFIG=$ROOT/recording-booth/config/booth-$n.yaml"
 done

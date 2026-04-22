@@ -4,7 +4,7 @@
 
 booth:
   id: 1
-  name: "performance"
+  name: "violin"
   port: 8000
 
 server:

@@ -6,26 +6,26 @@ Machine-readable architectural constraints. Agents must respect these rules.
 
 ## 3-Booth Deployment Model
 
-Three booths deploy independently on **geographically separated PCs**. No remote access between them. Each booth runs its own backend + frontend + local storage. They share exactly one resource: a single Cloudflare R2 bucket with keys namespaced by booth.
+Four booths deploy independently on **geographically separated PCs**. No remote access between them. Each booth runs its own backend + frontend + local storage. They share exactly one resource: a single Cloudflare R2 bucket with keys namespaced by booth.
 
 ```
-┌────────────────┐   ┌────────────────┐   ┌────────────────┐
-│ Booth 1 PC      │   │ Booth 2 PC      │   │ Booth 3 PC      │
-│ performance     │   │ objects         │   │ pump-game       │
-│ :8000 FastAPI   │   │ :8002 FastAPI   │   │ :8001 FastAPI   │
-│ Galaxy Pad Chr. │   │ Galaxy Pad Chr. │   │ Galaxy Pad Chr. │
-│ local counter   │   │ local counter   │   │ local counter   │
-│ local instagram/│   │ local instagram/│   │ local instagram/│
-└────────┬────────┘   └────────┬────────┘   └────────┬────────┘
-         │                     │                     │
-         │ R2 key:             │ R2 key:             │ (no R2 upload
-         │ videos/booth-1/...  │ videos/booth-2/...  │  this booth)
-         └─────────────────────┼─────────────────────┘
-                               ▼
-                    ┌──────────────────────┐
-                    │ Cloudflare R2 bucket │
-                    │ (QR code downloads)  │
-                    └──────────────────────┘
+┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
+│ Booth 1 PC    │ │ Booth 2 PC    │ │ Booth 3 PC    │ │ Booth 4 PC    │
+│ violin        │ │ biotron       │ │ playtron      │ │ beethoven     │
+│ :8000 FastAPI │ │ :8002 FastAPI │ │ :8001 FastAPI │ │ :8003 FastAPI │
+│ Galaxy Pad    │ │ Galaxy Pad    │ │ Galaxy Pad    │ │ Galaxy Pad    │
+│ local counter │ │ local counter │ │ local counter │ │ local counter │
+│ local insta/  │ │ local insta/  │ │ local insta/  │ │ local insta/  │
+└──────┬───────┘ └──────┬───────┘ └──────┬───────┘ └──────┬───────┘
+       │                │                │                │
+       │ videos/        │ videos/        │ videos/        │ videos/
+       │ booth-1/...    │ booth-2/...    │ booth-3/...    │ booth-4/...
+       └────────────────┴────────┬───────┴────────────────┘
+                                 ▼
+                      ┌──────────────────────┐
+                      │ Cloudflare R2 bucket │
+                      │ (QR code downloads)  │
+                      └──────────────────────┘
 ```
 
 ### Rules (booth-level)
@@ -38,11 +38,12 @@ Three booths deploy independently on **geographically separated PCs**. No remote
 
 ### Booth ↔ Program Mapping
 
-| Booth | Role | Directory | Port | Status |
+| Booth | Name      | Directory | Port | Status |
 |---|---|---|---|---|
-| 1 | Performance (음원 + 촬영) | `recording-booth/` (BOOTH_CONFIG=`config/booth-1.yaml`) | 8000 | Unified into recording-booth/ (US-001/US-002) |
-| 2 | Objects (사물 수음)       | `recording-booth/` (BOOTH_CONFIG=`config/booth-2.yaml`) | 8002 | Unified into recording-booth/ (US-003) |
-| 3 | Record (clone of 1)       | `recording-booth/` (BOOTH_CONFIG=`config/booth-3.yaml`) | 8001 | Unified into recording-booth/ (US-004). Pump-game archived under `archive/pump-game/`. |
+| 1 | violin    | `recording-booth/` (BOOTH_CONFIG=`config/booth-1.yaml`) | 8000 | Unified (US-001/US-002) |
+| 2 | biotron   | `recording-booth/` (BOOTH_CONFIG=`config/booth-2.yaml`) | 8002 | Unified (US-003) |
+| 3 | playtron  | `recording-booth/` (BOOTH_CONFIG=`config/booth-3.yaml`) | 8001 | Unified (US-004). Pump-game archived under `archive/pump-game/`. |
+| 4 | beethoven | `recording-booth/` (BOOTH_CONFIG=`config/booth-4.yaml`) | 8003 | Added post-unify |
 
 ---
 

@@ -4,7 +4,7 @@
 
 booth:
   id: 2
-  name: "objects"
+  name: "biotron"
   port: 8002
 
 server:

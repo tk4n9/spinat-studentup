@@ -41,9 +41,9 @@ def pytest_configure(config: pytest.Config) -> None:
         )
 
 
-@pytest.fixture(params=[1, 2, 3], ids=["booth-1", "booth-2", "booth-3"])
+@pytest.fixture(params=[1, 2, 3, 4], ids=["booth-1", "booth-2", "booth-3", "booth-4"])
 def booth_id(request: pytest.FixtureRequest) -> int:
-    """Parametrised booth identifier (1, 2, 3).
+    """Parametrised booth identifier (1, 2, 3, 4).
 
     Used by test_booth_identity.py to assert that each booth's YAML
     config loads with the expected values. Pair with `booth_config_path`

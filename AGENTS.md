@@ -22,9 +22,10 @@ This runs typecheck, backend import check, and tests. **If it passes silently, y
 
 | Booth | Directory | AGENTS.md / PRD | Status |
 |---|---|---|---|
-| 1 — Performance (음원 + 촬영) | `recording-booth/` (BOOTH_CONFIG=`config/booth-1.yaml`) | [AGENTS.md](recording-booth/AGENTS.md) | Unified into recording-booth/ (US-001/US-002) |
-| 2 — Objects (사물 수음)       | `recording-booth/` (BOOTH_CONFIG=`config/booth-2.yaml`) | [AGENTS.md](recording-booth/AGENTS.md) | Unified into recording-booth/ (US-003) |
-| 3 — Record (clone of 1)       | `recording-booth/` (BOOTH_CONFIG=`config/booth-3.yaml`) | [AGENTS.md](recording-booth/AGENTS.md) | Unified into recording-booth/ (US-004). Pump-game archived under `archive/pump-game/`. |
+| 1 — violin    | `recording-booth/` (BOOTH_CONFIG=`config/booth-1.yaml`, :8000) | [AGENTS.md](recording-booth/AGENTS.md) | Unified (US-001/US-002) |
+| 2 — biotron   | `recording-booth/` (BOOTH_CONFIG=`config/booth-2.yaml`, :8002) | [AGENTS.md](recording-booth/AGENTS.md) | Unified (US-003) |
+| 3 — playtron  | `recording-booth/` (BOOTH_CONFIG=`config/booth-3.yaml`, :8001) | [AGENTS.md](recording-booth/AGENTS.md) | Unified (US-004). Pump-game archived under `archive/pump-game/`. |
+| 4 — beethoven | `recording-booth/` (BOOTH_CONFIG=`config/booth-4.yaml`, :8003) | [AGENTS.md](recording-booth/AGENTS.md) | Added post-unify |
 
 ## Architecture Constraints
 
@@ -47,7 +48,7 @@ This runs typecheck, backend import check, and tests. **If it passes silently, y
 # Fresh Mac one-command setup (installs uv, Python 3.12, all deps)
 bash scripts/bootstrap.sh
 
-# Launch all 3 booths in parallel (logs in .omc/logs/)
+# Launch all 4 booths in parallel (logs in .omc/logs/)
 bash scripts/start-all.sh
 
 # Backend — single codebase, per-booth via BOOTH_CONFIG env var
@@ -61,7 +62,7 @@ BOOTH_CONFIG=../config/booth-1.yaml \
 # Frontend (single build, identity fetched at runtime via /api/booth)
 cd recording-booth/frontend
 ./node_modules/.bin/tsc --noEmit        # typecheck
-npm run build                           # production build (one dist for all 3 booths)
+npm run build                           # production build (one dist for all 4 booths)
 
 # Full verification
 bash scripts/verify.sh                  # all checks at once
@@ -82,4 +83,4 @@ bash scripts/verify.sh                  # all checks at once
 | [recording-booth/PRD.md](recording-booth/PRD.md) | Full product requirements (historical — describes original program-a scope) |
 | [recording-booth/AGENTS.md](recording-booth/AGENTS.md) | Unified backend/frontend agent guide |
 | [recording-booth/README.md](recording-booth/README.md) | Setup & deployment |
-| [recording-booth/config/booth-{1,2,3}.yaml](recording-booth/config/) | Per-booth runtime config selected via `BOOTH_CONFIG` env var |
+| [recording-booth/config/booth-{1,2,3,4}.yaml](recording-booth/config/) | Per-booth runtime config selected via `BOOTH_CONFIG` env var |

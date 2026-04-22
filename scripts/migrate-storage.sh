@@ -40,7 +40,7 @@ LEGACY_B2="$ROOT/booth-2-objects/backend/storage"
 # Top-level display/instagram/temp/music are legacy and must not exist
 # post-migration.
 SUBDIRS=(display instagram temp music)
-BOOTHS=(1 2 3)
+BOOTHS=(1 2 3 4)
 
 log()  { printf '%s\n' "$*"; }
 warn() { printf '\033[33m%s\033[0m\n' "$*" >&2; }

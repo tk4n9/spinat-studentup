@@ -78,8 +78,9 @@ def test_booth_config_loads(booth_id: int, booth_config_path: Path) -> None:
 
 
 def test_booth_port_in_expected_set(booth_id: int, booth_config_path: Path) -> None:
-    """Port mapping: 1→8000, 2→8002, 3→8001 (non-monotonic by design)."""
-    expected_ports = {1: 8000, 2: 8002, 3: 8001}
+    """Port mapping: 1→8000, 2→8002, 3→8001, 4→8003 (non-monotonic: 1-3
+    preserve pre-unify iPad bookmarks; 4 is new and grabs next free port)."""
+    expected_ports = {1: 8000, 2: 8002, 3: 8001, 4: 8003}
     info = _load_config_in_subprocess(booth_config_path)
     assert info["port"] == expected_ports[booth_id], (
         f"booth-{booth_id} should bind :{expected_ports[booth_id]}, "

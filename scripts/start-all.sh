@@ -29,22 +29,32 @@ start_booth() {
   echo "$!"
 }
 
+BOOTHS=(1 2 3 4)
 pids=()
 ports=()
-for n in 1 2 3; do
-  pids+=("$(start_booth "$n")")
+names=()
+for n in "${BOOTHS[@]}"; do
+  # Read port + name from YAML FIRST so a typo surfaces before we fork
+  # uvicorn (otherwise a bad config leaves orphan processes in the trap).
   ports+=("$(yq '.booth.port' "$CONFIG_DIR/booth-$n.yaml")")
+  names+=("$(yq '.booth.name' "$CONFIG_DIR/booth-$n.yaml")")
+  pids+=("$(start_booth "$n")")
 done
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  spinat-studentup — all booths running"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
-echo "  Booth 1 (Performance):  http://localhost:${ports[0]}   pid=${pids[0]}"
-echo "  Booth 2 (Objects):      http://localhost:${ports[1]}   pid=${pids[1]}"
-echo "  Booth 3 (Record):       http://localhost:${ports[2]}   pid=${pids[2]}"
+# Banner read from YAML so adding a booth is a one-line BOOTHS edit —
+# no parallel banner string to keep in sync.
+for i in "${!BOOTHS[@]}"; do
+  printf "  Booth %s (%s):  http://localhost:%s   pid=%s\n" \
+    "${BOOTHS[$i]}" "${names[$i]}" "${ports[$i]}" "${pids[$i]}"
+done
 echo ""
-echo "  Logs:  $LOG_DIR/booth-{1,2,3}.log"
+# macOS bash 3.2 predates negative array indexing — use explicit length.
+_LAST="${BOOTHS[$((${#BOOTHS[@]} - 1))]}"
+echo "  Logs:  $LOG_DIR/booth-{${BOOTHS[0]}..${_LAST}}.log"
 echo "  Stop: Ctrl+C (this script reaps all children)"
 echo ""
 
