@@ -386,8 +386,8 @@ wheels = [
 ]
 
 [[package]]
-name = "spinat-booth-1-performance"
-version = "0.1.0"
+name = "spinat-recording-booth"
+version = "0.2.0"
 source = { virtual = "." }
 dependencies = [
     { name = "aiofiles" },

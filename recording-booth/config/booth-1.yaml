@@ -1,0 +1,60 @@
+# Booth 1 — Performance (음원 + 촬영)
+# 접속: http://localhost:8000 (monitor) + http://<LAN-IP>:8000/pad (iPad)
+# R2 keys land under videos/booth-1/ inside the shared bucket.
+
+booth:
+  id: 1
+  name: "performance"
+  port: 8000
+
+server:
+  host: "0.0.0.0"
+  # Relative to backend/ — resolves to recording-booth/backend/storage/booth-1
+  storage_path: "./storage/booth-1"
+  frontend_dist: "../frontend/dist"
+
+session:
+  counter_file: "./storage/booth-1/counter.json"
+
+# UI tokens consumed by the frontend via GET /api/booth (see US-005).
+# Korean UI copy stays Korean (CLAUDE.md rule 5).
+theme:
+  primary: "#FF6B6B"
+  accent: "#4ECDC4"
+  start_copy: "시작하기"
+
+# Video format configurations — preserved from booth-1's config.yaml.
+# music_file: filename inside storage/music/ (null = no music)
+# music_start_offset: seconds into the track to begin playback
+formats:
+  - id: 1
+    label: "챌린지 1"
+    duration_seconds: 30
+    music_file: null
+    music_start_offset: 0
+
+  - id: 2
+    label: "챌린지 2"
+    duration_seconds: 30
+    music_file: null
+    music_start_offset: 0
+
+  - id: 3
+    label: "챌린지 3"
+    duration_seconds: 30
+    music_file: null
+    music_start_offset: 0
+
+  - id: 4
+    label: "챌린지 4"
+    duration_seconds: 30
+    music_file: null
+    music_start_offset: 0
+
+storage:
+  r2:
+    bucket: "spinat-reels-booth"
+    public_url: ""
+    # Preserves the pre-unification key layout videos/booth-1/<uuid>.<ext>
+    # so already-uploaded QR codes continue to resolve after migration.
+    key_prefix: "videos/booth-1/"

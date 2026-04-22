@@ -4,8 +4,11 @@ from pathlib import Path
 import boto3
 from botocore.exceptions import ClientError
 from config import (
-    R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY,
-    R2_BUCKET_NAME, R2_PUBLIC_URL, QR_EXPIRY_DAYS, BOOTH_ID,
+    R2,
+    R2_ACCOUNT_ID,
+    R2_ACCESS_KEY_ID,
+    R2_SECRET_ACCESS_KEY,
+    QR_EXPIRY_DAYS,
 )
 
 logger = logging.getLogger(__name__)
@@ -42,7 +45,7 @@ def _sync_upload(file_path: Path, key: str) -> None:
     client = _get_client()
     with open(file_path, "rb") as f:
         client.put_object(
-            Bucket=R2_BUCKET_NAME,
+            Bucket=R2.bucket,
             Key=key,
             Body=f,
             ContentType=_content_type_for(file_path),
@@ -57,7 +60,8 @@ async def upload_video(file_path: Path, video_id: str) -> str:
     if not is_configured():
         raise RuntimeError("R2 credentials not configured. Set R2_* environment variables in .env")
 
-    key = f"videos/booth-{BOOTH_ID}/{video_id}{file_path.suffix}"
+    # key_prefix is per-booth (e.g. "videos/booth-1/") — set in YAML, not code.
+    key = f"{R2.key_prefix}{video_id}{file_path.suffix}"
 
     try:
         await asyncio.to_thread(_sync_upload, file_path, key)
@@ -67,12 +71,12 @@ async def upload_video(file_path: Path, video_id: str) -> str:
         raise
 
     # Prefer public URL (stable, no expiry)
-    if R2_PUBLIC_URL:
-        return f"{R2_PUBLIC_URL.rstrip('/')}/{key}"
+    if R2.public_url:
+        return f"{R2.public_url.rstrip('/')}/{key}"
 
     # Fallback: presigned URL (expires after QR_EXPIRY_DAYS)
-    return client.generate_presigned_url(
+    return _get_client().generate_presigned_url(
         "get_object",
-        Params={"Bucket": R2_BUCKET_NAME, "Key": key},
+        Params={"Bucket": R2.bucket, "Key": key},
         ExpiresIn=QR_EXPIRY_DAYS * 86400,
     )

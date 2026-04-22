@@ -7,17 +7,24 @@ LOG_DIR="$ROOT/.omc/logs"
 mkdir -p "$LOG_DIR"
 
 # Launch one booth uvicorn in the background; echoes the child pid for reaping.
+# booth_config: optional absolute path to the YAML config (recording-booth only for now;
+#               empty string leaves BOOTH_CONFIG unset for legacy booth-2/booth-3 backends
+#               that still read config.yaml directly).
 start_booth() {
-  local backend_dir="$1" port="$2" log_name="$3"
+  local backend_dir="$1" port="$2" log_name="$3" booth_config="${4:-}"
   (
     cd "$backend_dir"
-    uv run uvicorn main:app --host 0.0.0.0 --port "$port"
+    if [ -n "$booth_config" ]; then
+      BOOTH_CONFIG="$booth_config" uv run uvicorn main:app --host 0.0.0.0 --port "$port"
+    else
+      uv run uvicorn main:app --host 0.0.0.0 --port "$port"
+    fi
   ) > "$LOG_DIR/$log_name.log" 2>&1 &
   echo "$!"
 }
 
 pids=()
-pids+=("$(start_booth "$ROOT/program-a-reels-booth/backend" 8000 booth-1)")
+pids+=("$(start_booth "$ROOT/recording-booth/backend" 8000 booth-1 "$ROOT/recording-booth/config/booth-1.yaml")")
 pids+=("$(start_booth "$ROOT/booth-2-objects/backend"       8002 booth-2)")
 pids+=("$(start_booth "$ROOT/booth-3-record/backend"        8001 booth-3)")
 

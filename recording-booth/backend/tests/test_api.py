@@ -8,25 +8,27 @@ import pytest
 from fastapi.testclient import TestClient
 
 from main import app
-from config import COUNTER_FILE, DISPLAY_PATH, INSTAGRAM_PATH, TEMP_PATH
+from config import CONFIG, PATHS
 
 
 @pytest.fixture(autouse=True)
 def _clean_storage():
     """Remove test artifacts before and after each test."""
-    for d in [DISPLAY_PATH, INSTAGRAM_PATH, TEMP_PATH]:
+    counter_file = CONFIG.session.counter_file
+    dirs = [PATHS.display, PATHS.instagram, PATHS.temp]
+    for d in dirs:
         for f in d.iterdir():
             if f.is_file() and not f.name.startswith("."):
                 f.unlink()
-    if COUNTER_FILE.exists():
-        COUNTER_FILE.unlink()
+    if counter_file.exists():
+        counter_file.unlink()
     yield
-    for d in [DISPLAY_PATH, INSTAGRAM_PATH, TEMP_PATH]:
+    for d in dirs:
         for f in d.iterdir():
             if f.is_file() and not f.name.startswith("."):
                 f.unlink()
-    if COUNTER_FILE.exists():
-        COUNTER_FILE.unlink()
+    if counter_file.exists():
+        counter_file.unlink()
 
 
 @pytest.fixture
@@ -112,16 +114,16 @@ def test_finalize_both(client):
     res = _upload_and_finalize(client, save=True, instagram=True)
     assert res["status"] == 200
     # display folder should have 1 file
-    assert len(list(DISPLAY_PATH.iterdir())) == 1
+    assert len(list(PATHS.display.iterdir())) == 1
     # instagram folder should have 1 file
-    assert len([f for f in INSTAGRAM_PATH.iterdir() if f.is_file()]) == 1
+    assert len([f for f in PATHS.instagram.iterdir() if f.is_file()]) == 1
 
 
 def test_finalize_save_only(client):
     res = _upload_and_finalize(client, save=True, instagram=False)
     assert res["status"] == 200
-    assert len(list(DISPLAY_PATH.iterdir())) == 1
-    assert len([f for f in INSTAGRAM_PATH.iterdir() if f.is_file()]) == 0
+    assert len(list(PATHS.display.iterdir())) == 1
+    assert len([f for f in PATHS.instagram.iterdir() if f.is_file()]) == 0
 
 
 def test_finalize_mp4_save_only(client):
@@ -136,7 +138,7 @@ def test_finalize_mp4_save_only(client):
         data={"save": "true", "instagram": "false"},
     )
     assert r.status_code == 200
-    saved = [f for f in DISPLAY_PATH.iterdir() if f.is_file()]
+    saved = [f for f in PATHS.display.iterdir() if f.is_file()]
     assert len(saved) == 1
     assert saved[0].suffix == ".mp4"
 
@@ -144,17 +146,17 @@ def test_finalize_mp4_save_only(client):
 def test_finalize_instagram_only(client):
     res = _upload_and_finalize(client, save=False, instagram=True)
     assert res["status"] == 200
-    assert len(list(DISPLAY_PATH.iterdir())) == 0
-    assert len([f for f in INSTAGRAM_PATH.iterdir() if f.is_file()]) == 1
+    assert len(list(PATHS.display.iterdir())) == 0
+    assert len([f for f in PATHS.instagram.iterdir() if f.is_file()]) == 1
 
 
 def test_finalize_neither_discards(client):
     res = _upload_and_finalize(client, save=False, instagram=False)
     assert res["status"] == 200
-    assert len(list(DISPLAY_PATH.iterdir())) == 0
-    assert len([f for f in INSTAGRAM_PATH.iterdir() if f.is_file()]) == 0
+    assert len(list(PATHS.display.iterdir())) == 0
+    assert len([f for f in PATHS.instagram.iterdir() if f.is_file()]) == 0
     # temp should also be empty
-    assert len([f for f in TEMP_PATH.iterdir() if f.is_file()]) == 0
+    assert len([f for f in PATHS.temp.iterdir() if f.is_file()]) == 0
 
 
 # ── Display list ─────────────────────────────────────────────

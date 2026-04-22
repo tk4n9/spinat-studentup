@@ -32,8 +32,9 @@ run_silent() {
 }
 
 # ── Backend check (uv-based) ────────────────────────────────
+# extra_env: optional "KEY=val" prefix for the subprocess (e.g. BOOTH_CONFIG=...)
 check_backend() {
-  local name="$1" dir="$2"
+  local name="$1" dir="$2" extra_env="${3:-}"
 
   if [ ! -f "$dir/pyproject.toml" ] || [ ! -f "$dir/uv.lock" ]; then
     echo "SKIP: $name backend (pyproject.toml or uv.lock missing — run bash scripts/bootstrap.sh)" >&2
@@ -44,11 +45,11 @@ check_backend() {
   fi
 
   run_silent "$name backend import" \
-    bash -c "cd '$dir' && uv run --frozen python -c 'import main'"
+    bash -c "cd '$dir' && $extra_env uv run --frozen python -c 'import main'"
 
   if [ -d "$dir/tests" ] && ls "$dir/tests"/test_*.py 1>/dev/null 2>&1; then
     run_silent "$name backend tests" \
-      bash -c "cd '$dir' && uv run --frozen pytest tests/ -q --tb=short"
+      bash -c "cd '$dir' && $extra_env uv run --frozen pytest tests/ -q --tb=short"
   fi
 }
 
@@ -69,8 +70,9 @@ check_frontend() {
 }
 
 # ── Run checks for all 3 booths ─────────────────────────────
-check_backend  "booth-1 (performance)" "$ROOT/program-a-reels-booth/backend"
-check_frontend "booth-1 (performance)" "$ROOT/program-a-reels-booth/frontend"
+check_backend  "booth-1 (performance)" "$ROOT/recording-booth/backend" \
+  "BOOTH_CONFIG=$ROOT/recording-booth/config/booth-1.yaml"
+check_frontend "booth-1 (performance)" "$ROOT/recording-booth/frontend"
 
 check_backend  "booth-2 (objects)"     "$ROOT/booth-2-objects/backend"
 check_frontend "booth-2 (objects)"     "$ROOT/booth-2-objects/frontend"

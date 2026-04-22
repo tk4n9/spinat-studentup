@@ -1,7 +1,7 @@
 [project]
-name = "spinat-booth-1-performance"
-version = "0.1.0"
-description = "spinat 릴스 Booth 1 — Performance (음원 + 촬영) FastAPI backend"
+name = "spinat-recording-booth"
+version = "0.2.0"
+description = "spinat 릴스 Booth — unified recording backend (driven by BOOTH_CONFIG per-booth YAML)"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "fastapi==0.110.1",

@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from config import FRONTEND_DIST, DISPLAY_PATH, MUSIC_PATH
+from config import CONFIG, PATHS
 from routers import session, videos, ws
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s  %(name)s  %(message)s")
@@ -27,21 +27,25 @@ app.include_router(ws.router)
 
 # ── Static file mounts ────────────────────────────────────────────
 # Serve recorded videos for the monitor player (supports HTTP Range for seeking)
-app.mount("/videos/display", StaticFiles(directory=str(DISPLAY_PATH)), name="display")
+app.mount("/videos/display", StaticFiles(directory=str(PATHS.display)), name="display")
 
 # Serve music tracks to the Galaxy Pad browser (for Web Audio API)
-app.mount("/music", StaticFiles(directory=str(MUSIC_PATH)), name="music")
+app.mount("/music", StaticFiles(directory=str(PATHS.music)), name="music")
 
 # ── SPA fallback: serve index.html for client-side routes ─────
-if FRONTEND_DIST.exists():
-    _index_path = FRONTEND_DIST / "index.html"
+if CONFIG.server.frontend_dist.exists():
+    _index_path = CONFIG.server.frontend_dist / "index.html"
 
     @app.get("/pad", include_in_schema=False)
     @app.get("/monitor", include_in_schema=False)
     async def _spa_fallback():
         return FileResponse(_index_path)
 
-    app.mount("/", StaticFiles(directory=str(FRONTEND_DIST), html=True), name="frontend")
+    app.mount(
+        "/",
+        StaticFiles(directory=str(CONFIG.server.frontend_dist), html=True),
+        name="frontend",
+    )
 
 
 def _get_local_ip() -> str:
@@ -59,12 +63,28 @@ def _get_local_ip() -> str:
 @app.on_event("startup")
 async def _startup():
     local_ip = _get_local_ip()
+    port = CONFIG.booth.port
     logging.getLogger("spinat").info(
         f"\n\n"
         f"  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"  spinat 릴스 Booth — 서버 시작됨\n"
+        f"  spinat 릴스 Booth {CONFIG.booth.id} ({CONFIG.booth.name}) — 서버 시작됨\n"
         f"  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"  모니터 (이 PC):  http://localhost:8000/monitor\n"
-        f"  갤럭시 패드:     http://{local_ip}:8000/pad\n"
+        f"  모니터 (이 PC):  http://localhost:{port}/monitor\n"
+        f"  갤럭시 패드:     http://{local_ip}:{port}/pad\n"
         f"  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
     )
+
+
+# ── Runtime config for the frontend (US-005 theme injection) ──────
+@app.get("/api/booth", include_in_schema=False)
+def get_booth_runtime_config() -> dict:
+    """Return the subset of BoothConfig the frontend needs on load."""
+    return {
+        "id": CONFIG.booth.id,
+        "name": CONFIG.booth.name,
+        "theme": {
+            "primary": CONFIG.theme.primary,
+            "accent": CONFIG.theme.accent,
+            "startCopy": CONFIG.theme.start_copy,
+        },
+    }
