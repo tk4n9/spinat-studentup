@@ -26,6 +26,22 @@ if ! command -v yq >/dev/null 2>&1; then
 fi
 echo "→ yq: $(yq --version)"
 
+# ── 0b. node + npm (frontend build prerequisites) ───────────────
+# Homebrew formula is `node` — npm ships bundled with it. There is no
+# standalone `brew install npm` formula. If a devbox uses nvm/volta to
+# manage Node, we respect that (both `node` and `npm` already on PATH)
+# and skip the brew install.
+if ! command -v node >/dev/null 2>&1 || ! command -v npm >/dev/null 2>&1; then
+  if command -v brew >/dev/null 2>&1; then
+    echo "→ node/npm not found; installing Node via Homebrew (bundles npm)..."
+    brew install node >/dev/null
+  else
+    echo "✗ node/npm missing and Homebrew unavailable — install Node manually (https://nodejs.org/)" >&2
+    exit 1
+  fi
+fi
+echo "→ node: $(node --version)  npm: $(npm --version)"
+
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  spinat-studentup — bootstrap"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
