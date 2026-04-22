@@ -25,6 +25,25 @@ app.include_router(session.router)
 app.include_router(videos.router)
 app.include_router(ws.router)
 
+
+# ── Runtime config for the frontend (US-005 theme injection) ──────
+# Must be defined BEFORE the root StaticFiles mount below; any route
+# registered after `app.mount("/", StaticFiles(...))` is shadowed by
+# the static catch-all and returns 404.
+@app.get("/api/booth", include_in_schema=False)
+def get_booth_runtime_config() -> dict:
+    """Return the subset of BoothConfig the frontend needs on load."""
+    return {
+        "id": CONFIG.booth.id,
+        "name": CONFIG.booth.name,
+        "theme": {
+            "primary": CONFIG.theme.primary,
+            "accent": CONFIG.theme.accent,
+            "startCopy": CONFIG.theme.start_copy,
+        },
+    }
+
+
 # ── Static file mounts ────────────────────────────────────────────
 # Serve recorded videos for the monitor player (supports HTTP Range for seeking)
 app.mount("/videos/display", StaticFiles(directory=str(PATHS.display)), name="display")
@@ -75,16 +94,5 @@ async def _startup():
     )
 
 
-# ── Runtime config for the frontend (US-005 theme injection) ──────
-@app.get("/api/booth", include_in_schema=False)
-def get_booth_runtime_config() -> dict:
-    """Return the subset of BoothConfig the frontend needs on load."""
-    return {
-        "id": CONFIG.booth.id,
-        "name": CONFIG.booth.name,
-        "theme": {
-            "primary": CONFIG.theme.primary,
-            "accent": CONFIG.theme.accent,
-            "startCopy": CONFIG.theme.start_copy,
-        },
-    }
+# (get_booth_runtime_config moved above — must register before the
+#  root StaticFiles mount to avoid 404 from the catch-all.)

@@ -1,13 +1,17 @@
 #!/usr/bin/env bash
 # ── Bootstrap: fresh Mac → fully runnable spinat-studentup repo ──────────────
-# Single command: install uv, fetch Python 3.12, sync all 3 booth backends,
-# install + build all 3 frontends, then run verify.sh.
+# Single command: install uv, fetch Python 3.12, sync booth backends,
+# install + build booth frontends, then run verify.sh.
+#
+# BOOTHS array covers the distinct backend/frontend trees that still exist
+# on disk. Booth-2 was collapsed into recording-booth/ (single codebase,
+# BOOTH_CONFIG env-var selects booth identity); booth-3 unification pending.
 #
 # Safe to re-run: uv sync is idempotent, npm ci is idempotent.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-BOOTHS=(recording-booth booth-2-objects booth-3-record)
+BOOTHS=(recording-booth booth-3-record)
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  spinat-studentup — bootstrap"

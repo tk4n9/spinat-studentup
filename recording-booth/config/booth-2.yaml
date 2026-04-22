@@ -1,0 +1,38 @@
+# Booth 2 — 오브제 수음 (object-sound capture).
+# Galaxy Pad's internal mic records sound of physical objects being touched
+# (bell, rustling paper, etc.); no backing music track, fixed 30s duration.
+
+booth:
+  id: 2
+  name: "objects"
+  port: 8002
+
+server:
+  host: "0.0.0.0"
+  storage_path: "./storage/booth-2"
+  frontend_dist: "../frontend/dist"
+
+session:
+  counter_file: "./storage/booth-2/counter.json"
+
+theme:
+  primary: "#FF6B6B"
+  accent: "#4ECDC4"
+  # Start-button copy deliberately matches booth-1 (event-day operator intuition);
+  # booth identity shown via footer suffix wired in US-005 (see plan commit 6).
+  start_copy: "시작하기"
+
+formats:
+  - id: 1
+    label: "오브제 챌린지"
+    duration_seconds: 30
+    music_file: null
+    music_start_offset: 0
+
+storage:
+  r2:
+    bucket: "spinat-reels-booth"
+    public_url: ""
+    # Must match pre-unify key format `videos/booth-2/{video_id}{ext}`
+    # (legacy services/r2.py) so existing iPad QR-code links stay valid.
+    key_prefix: "videos/booth-2/"

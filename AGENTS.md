@@ -23,7 +23,7 @@ This runs typecheck, backend import check, and tests. **If it passes silently, y
 | Booth | Directory | AGENTS.md / PRD | Status |
 |---|---|---|---|
 | 1 — Performance (음원 + 촬영) | `program-a-reels-booth/` | [AGENTS.md](program-a-reels-booth/AGENTS.md) | Complete (audio-overlay scope pending client spec) |
-| 2 — Objects (사물 수음) | `booth-2-objects/` | [AGENTS.md](booth-2-objects/AGENTS.md) | Scaffolded — fork of Program A with 30s fixed |
+| 2 — Objects (사물 수음) | `recording-booth/` (BOOTH_CONFIG=`config/booth-2.yaml`) | [AGENTS.md](recording-booth/AGENTS.md) | Unified into recording-booth/ (single-codebase 3-booth app, US-003) |
 | 3 — Pump Game (발판 게임) | `program-b-pump-game/` | [PRD.md](program-b-pump-game/PRD.md) | Planning complete, blocked on song + date |
 
 ## Architecture Constraints

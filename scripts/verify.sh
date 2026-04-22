@@ -70,12 +70,14 @@ check_frontend() {
 }
 
 # ── Run checks for all 3 booths ─────────────────────────────
+# Unified recording-booth app: one backend tree + one frontend dist, launched
+# per-booth via BOOTH_CONFIG env. We import-check against each active booth YAML
+# so a typo in any config.yaml surfaces at verify time, not at event time.
 check_backend  "booth-1 (performance)" "$ROOT/recording-booth/backend" \
   "BOOTH_CONFIG=$ROOT/recording-booth/config/booth-1.yaml"
-check_frontend "booth-1 (performance)" "$ROOT/recording-booth/frontend"
-
-check_backend  "booth-2 (objects)"     "$ROOT/booth-2-objects/backend"
-check_frontend "booth-2 (objects)"     "$ROOT/booth-2-objects/frontend"
+check_backend  "booth-2 (objects)"     "$ROOT/recording-booth/backend" \
+  "BOOTH_CONFIG=$ROOT/recording-booth/config/booth-2.yaml"
+check_frontend "recording-booth"       "$ROOT/recording-booth/frontend"
 
 check_backend  "booth-3 (record)"      "$ROOT/booth-3-record/backend"
 check_frontend "booth-3 (record)"      "$ROOT/booth-3-record/frontend"

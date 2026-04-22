@@ -25,7 +25,7 @@ start_booth() {
 
 pids=()
 pids+=("$(start_booth "$ROOT/recording-booth/backend" 8000 booth-1 "$ROOT/recording-booth/config/booth-1.yaml")")
-pids+=("$(start_booth "$ROOT/booth-2-objects/backend"       8002 booth-2)")
+pids+=("$(start_booth "$ROOT/recording-booth/backend" 8002 booth-2 "$ROOT/recording-booth/config/booth-2.yaml")")
 pids+=("$(start_booth "$ROOT/booth-3-record/backend"        8001 booth-3)")
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
