@@ -21,7 +21,7 @@
 
 ## Backend (uv + pyproject.toml)
 
-Each booth's backend is a self-contained uv project: `pyproject.toml` + `uv.lock` + `.venv/` (auto-created by `uv sync`). uv manages Python 3.12 itself — no pyenv or system Python required.
+All three booths share one uv project at `recording-booth/backend/` (`pyproject.toml` + `uv.lock` + `.venv/`, auto-created by `uv sync`). Per-booth identity is selected at launch via `BOOTH_CONFIG`. uv manages Python 3.12 itself — no pyenv or system Python required.
 
 ```bash
 # First-time (any fresh Mac)

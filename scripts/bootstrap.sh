@@ -3,16 +3,14 @@
 # Single command: install uv, fetch Python 3.12, sync booth backends,
 # install + build booth frontends, then run verify.sh.
 #
-# BOOTHS array covers the distinct backend/frontend trees that still exist
-# on disk. Booth-2 was collapsed into recording-booth/ (single codebase,
-# BOOTH_CONFIG env-var selects booth identity); booth-3 unification pending.
+# BOOTHS lists the backend/frontend trees to sync. All three booths now
+# share recording-booth/, so the array is a single entry; kept as an array
+# so re-expansion (e.g. reviving pump-game as a sidecar) is one line.
 #
 # Safe to re-run: uv sync is idempotent, npm ci is idempotent.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-# Single unified backend + frontend tree. Per-booth identity selected at
-# launch time via BOOTH_CONFIG env (see scripts/start-all.sh).
 BOOTHS=(recording-booth)
 
 # ── 0. yq (used by start-all.sh to read booth.port out of YAML configs) ─
@@ -49,8 +47,9 @@ echo "→ uv: $(uv --version)"
 echo "→ Ensuring Python 3.12 is available..."
 uv python install 3.12 >/dev/null
 
-# ── 3. Backend sync (3 booths, parallel) ────────────────────
-echo "→ Syncing 3 backend pyprojects in parallel..."
+# ── 3. Backend sync ─────────────────────────────────────────
+# Parallel loop preserved for when BOOTHS grows back past 1 entry.
+echo "→ Syncing backend pyproject(s)..."
 pids=()
 for b in "${BOOTHS[@]}"; do
   (
@@ -68,8 +67,9 @@ if [ $fail -ne 0 ]; then
   exit 1
 fi
 
-# ── 4. Frontend install + build (3 booths, sequential) ──────
-# Sequential to avoid memory spike during simultaneous vite builds.
+# ── 4. Frontend install + build ─────────────────────────────
+# Sequential loop (matters again if BOOTHS grows — simultaneous vite
+# builds spike RAM). With a single entry today, the loop is a no-op cost.
 for b in "${BOOTHS[@]}"; do
   FRONT="$ROOT/$b/frontend"
   if [ -f "$FRONT/package.json" ]; then

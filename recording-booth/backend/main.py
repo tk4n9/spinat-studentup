@@ -68,6 +68,7 @@ if CONFIG.server.frontend_dist.exists():
 
 
 def _get_local_ip() -> str:
+
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.settimeout(2)
@@ -93,6 +94,3 @@ async def _startup():
         f"  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
     )
 
-
-# (get_booth_runtime_config moved above — must register before the
-#  root StaticFiles mount to avoid 404 from the catch-all.)

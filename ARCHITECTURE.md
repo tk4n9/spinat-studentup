@@ -190,7 +190,7 @@ If Program B is not running, the POST silently fails and Program A works exactly
 
 ## Verification Contract
 
-Any change must pass `scripts/verify.sh`. The script checks for **both programs**:
+Any change must pass `scripts/verify.sh`. The script checks the unified `recording-booth/` tree (import-smoke per booth config + pytest once + frontend typecheck & build):
 1. Backend Python imports succeed
 2. Backend tests pass (pytest)
 3. Frontend TypeScript compiles (tsc --noEmit)
