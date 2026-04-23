@@ -42,6 +42,25 @@ if ! command -v node >/dev/null 2>&1 || ! command -v npm >/dev/null 2>&1; then
 fi
 echo "→ node: $(node --version)  npm: $(npm --version)"
 
+# ── 0c. ffmpeg (runtime dep for services/transcode.py) ──────────
+# Finalize route runs every recording through ffmpeg to produce a
+# browser-streamable faststart MP4 (Bug B+C fix, STATUSLOG 2026-04-22).
+# Missing ffmpeg on the venue Mac silently breaks the finalize flow:
+# the iPad button flips "처리 중" → "완료" with no QR code and no R2
+# upload, because transcode fires BEFORE the R2 step in
+# routers/videos.py finalize. Install at bootstrap so the failure
+# mode can't resurface on a fresh clone.
+if ! command -v ffmpeg >/dev/null 2>&1; then
+  if command -v brew >/dev/null 2>&1; then
+    echo "→ ffmpeg not found; installing via Homebrew..."
+    brew install ffmpeg >/dev/null
+  else
+    echo "✗ ffmpeg missing and Homebrew unavailable — install manually (https://ffmpeg.org/)" >&2
+    exit 1
+  fi
+fi
+echo "→ ffmpeg: $(ffmpeg -version 2>&1 | head -1 | awk '{print $1, $2, $3}')"
+
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  spinat-studentup — bootstrap"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
