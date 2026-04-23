@@ -15,8 +15,30 @@ export default function MonitorApp() {
     el.play().catch(() => {});
   }, [current]);
 
-  // When a video ends, advance to next
-  const handleEnded = () => advance();
+  // When a video ends, either rewind-and-replay (single video) or
+  // advance to the next (multi-video playlist).
+  //
+  // Belt-and-suspenders: `loop={videos.length <= 1}` below SHOULD make
+  // the browser loop natively and suppress `ended` entirely for the
+  // single-video case. Real-world behaviour drifts though — stale dist,
+  // Safari autoplay interactions with audio tracks, or a transcoded MP4
+  // whose duration metadata trips an early `ended` — so when `ended`
+  // does fire and we only have one video, rewind + play explicitly
+  // instead of falling off the end. `advance()` for len=1 is a setIndex
+  // no-op (prev+1 % 1 === prev), so React bails out of the re-render,
+  // the `[current]` effect never re-fires, and playback freezes on the
+  // last frame. This explicit path avoids that trap.
+  const handleEnded = () => {
+    if (videos.length <= 1) {
+      const el = videoRef.current;
+      if (el) {
+        el.currentTime = 0;
+        el.play().catch(() => {});
+      }
+      return;
+    }
+    advance();
+  };
 
   // Show connection indicator briefly then hide
   useEffect(() => {
