@@ -31,12 +31,28 @@ logger = logging.getLogger(__name__)
 _FASTSTART_FLAG = "+faststart"
 
 # Full transcode args — used when input is WebM (or any format that
-# needs codec conversion). libx264 veryfast + CRF 23 is the quality/
-# speed sweet spot identified during Bug B diagnosis.
+# needs codec conversion).
+#
+# Tuned 2026-04-24 after observing 5-6 MB per 20-second clip on the
+# venue pipeline — too heavy for QR-triggered phone downloads over
+# cellular. New preset targets ~2-2.7 MB at still-acceptable visual
+# quality for the monitor showcase:
+#   -preset fast   : ~10% smaller than veryfast at same CRF, ~30% more
+#                    CPU — still well under the 60s timeout.
+#   -crf 28        : ~45% smaller than CRF 23. Slight softening, not
+#                    noticeable on a phone screen during reel playback.
+#   -r 30          : caps at 30fps. iPhone back cameras default to 30
+#                    anyway; this only kicks in if a device recorded at
+#                    60fps, in which case dropping half the frames saves
+#                    ~30-40% with no perceptible motion loss for the
+#                    stationary selfie-style shots we capture.
+# Resolution is NOT scaled — 720p is kept so the big monitor stays
+# crisp. Size savings come from codec tuning, not pixel count.
 _TRANSCODE_ARGS = [
     "-c:v", "libx264",
-    "-preset", "veryfast",
-    "-crf", "23",
+    "-preset", "fast",
+    "-crf", "28",
+    "-r", "30",
     "-c:a", "aac",
     "-b:a", "128k",
     "-movflags", _FASTSTART_FLAG,
