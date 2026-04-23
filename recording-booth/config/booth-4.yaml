@@ -30,6 +30,6 @@ formats:
 storage:
   r2:
     bucket: "spinat-reels-booth"
-    public_url: ""
+    public_url: "https://pub-a1950a6d793d49908f2b3f9544b619a5.r2.dev"
     # New booth → new key prefix. No legacy URLs to preserve here.
     key_prefix: "videos/booth-4/"

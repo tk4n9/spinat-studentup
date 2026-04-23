@@ -54,7 +54,7 @@ formats:
 storage:
   r2:
     bucket: "spinat-reels-booth"
-    public_url: ""
+    public_url: "https://pub-a1950a6d793d49908f2b3f9544b619a5.r2.dev"
     # Preserves the pre-unification key layout videos/booth-1/<uuid>.<ext>
     # so already-uploaded QR codes continue to resolve after migration.
     key_prefix: "videos/booth-1/"
