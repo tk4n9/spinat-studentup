@@ -1,6 +1,6 @@
 # Booth 2 — 오브제 수음 (object-sound capture).
 # Galaxy Pad's internal mic records sound of physical objects being touched
-# (bell, rustling paper, etc.); no backing music track, fixed 30s duration.
+# (bell, rustling paper, etc.); no backing music track, fixed 20s duration.
 
 booth:
   id: 2
@@ -26,7 +26,7 @@ theme:
 formats:
   - id: 1
     label: "오브제 챌린지"
-    duration_seconds: 30
+    duration_seconds: 20
     music_file: null
     music_start_offset: 0
 

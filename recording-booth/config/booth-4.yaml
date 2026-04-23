@@ -24,7 +24,7 @@ theme:
 formats:
   - id: 1
     label: "챌린지"
-    duration_seconds: 30
+    duration_seconds: 20
     music_file: null
     music_start_offset: 0
 

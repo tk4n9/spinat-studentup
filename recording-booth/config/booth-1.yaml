@@ -30,25 +30,25 @@ theme:
 formats:
   - id: 1
     label: "챌린지 1"
-    duration_seconds: 30
+    duration_seconds: 20
     music_file: null
     music_start_offset: 0
 
   - id: 2
     label: "챌린지 2"
-    duration_seconds: 30
+    duration_seconds: 20
     music_file: null
     music_start_offset: 0
 
   - id: 3
     label: "챌린지 3"
-    duration_seconds: 30
+    duration_seconds: 20
     music_file: null
     music_start_offset: 0
 
   - id: 4
     label: "챌린지 4"
-    duration_seconds: 30
+    duration_seconds: 20
     music_file: null
     music_start_offset: 0
 
