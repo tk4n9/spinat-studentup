@@ -41,11 +41,17 @@ export default function MonitorApp() {
 
   return (
     <div className="w-screen h-screen bg-black relative overflow-hidden">
-      {/* Main video player */}
+      {/* Main video player.
+          `loop` when there's only one video — a single-element playlist
+          can't advance (setIndex((0+1)%1)=0 is a no-op → effect never
+          re-runs), so let the browser loop natively. Flip back to false
+          as soon as a second video arrives via WS so `onEnded` fires and
+          playlist advancement resumes. */}
       <video
         ref={videoRef}
         autoPlay
         playsInline
+        loop={videos.length <= 1}
         onEnded={handleEnded}
         className="w-full h-full object-cover"
       />
