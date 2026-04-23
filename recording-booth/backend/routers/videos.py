@@ -4,7 +4,7 @@ from pathlib import Path
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from fastapi.responses import Response
 
-from services import storage, r2, qr_gen
+from services import storage, r2, qr_gen, transcode
 from routers.ws import manager
 
 logger = logging.getLogger(__name__)
@@ -44,6 +44,18 @@ async def finalize_video(
         storage.delete_temp(path)
         _registry.pop(video_id, None)
         return {"id": video_id, "r2_url": None}
+
+    # ── Normalize to faststart MP4 (Bug B+C fix) ────────────────────
+    # WebKit MediaRecorder produces WebM with the Cues element at file
+    # end, which stalls HTTP streaming in browsers. Transcode EVERY
+    # recording to H.264/AAC MP4 with +faststart before any downstream
+    # consumer (monitor <video>, instagram folder, R2 upload) sees it.
+    try:
+        path = await transcode.transcode_to_faststart_mp4(path)
+        _registry[video_id] = path
+    except Exception as exc:
+        logger.error(f"Transcode failed for {video_id}: {exc}")
+        raise HTTPException(500, f"Transcode failed: {exc}")
 
     # ── Move to display folder (local copy for monitor) ─────────────
     if save:
