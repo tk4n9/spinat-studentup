@@ -71,7 +71,7 @@ export default function RecordingScreen() {
   }
 
   return (
-    <div className="w-full h-full relative bg-black">
+    <div className="w-full h-full relative bg-[var(--theme-bg,#607A33)]">
       {/* Camera preview — mirrored so user sees themselves naturally */}
       <video
         ref={previewRef}

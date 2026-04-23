@@ -19,6 +19,7 @@ theme:
   primary: "#FF6B6B"
   accent: "#4ECDC4"
   start_copy: "시작하기"
+  background: "#607A33"
 
 formats:
   - id: 1

@@ -22,7 +22,7 @@ export default function PadApp() {
   }, []);
 
   return (
-    <div className="w-screen h-screen bg-black overflow-hidden font-sans">
+    <div className="w-screen h-dvh bg-[var(--theme-bg,#607A33)] overflow-hidden font-sans">
       {screen === 'START'      && <StartScreen />}
       {screen === 'COUNTDOWN'  && <CountdownScreen />}
       {screen === 'RECORDING'  && <RecordingScreen />}

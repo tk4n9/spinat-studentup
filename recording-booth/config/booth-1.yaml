@@ -22,6 +22,7 @@ theme:
   primary: "#FF6B6B"
   accent: "#4ECDC4"
   start_copy: "시작하기"
+  background: "#607A33"
 
 # Video format configurations — preserved from booth-1's config.yaml.
 # music_file: filename inside storage/music/ (null = no music)

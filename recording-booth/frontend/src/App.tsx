@@ -21,12 +21,17 @@ export default function App() {
     const root = document.documentElement;
     root.style.setProperty('--theme-primary', config.theme.primary);
     root.style.setProperty('--theme-accent', config.theme.accent);
+    root.style.setProperty('--theme-bg', config.theme.background);
+    // Paint body too so the area outside the root (safe-area insets,
+    // browser chrome gap on iPad) matches the app background instead
+    // of flashing black during nav / loading.
+    document.body.style.background = config.theme.background;
     document.title = `spinat ${config.name} booth`;
   }, [config]);
 
   if (error) {
     return (
-      <div className="w-screen h-dvh flex items-center justify-center bg-black text-white/70 text-sm px-8 text-center">
+      <div className="w-screen h-dvh flex items-center justify-center bg-[var(--theme-bg,#607A33)] text-white/70 text-sm px-8 text-center">
         부스 설정을 불러오지 못했어요 — 서버 로그를 확인해 주세요. ({error})
       </div>
     );
@@ -36,7 +41,7 @@ export default function App() {
     // Neutral placeholder: same background as the app shell, no booth-specific
     // styling (we don't have the theme yet). A single centered spinner.
     return (
-      <div className="w-screen h-dvh flex items-center justify-center bg-black">
+      <div className="w-screen h-dvh flex items-center justify-center bg-[var(--theme-bg,#607A33)]">
         <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin" />
       </div>
     );

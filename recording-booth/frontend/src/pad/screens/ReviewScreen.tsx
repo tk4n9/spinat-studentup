@@ -78,7 +78,7 @@ export default function ReviewScreen() {
     // Full-bleed stage. h-dvh (dynamic viewport) guarantees the modal stays
     // inside the visible area on iOS Safari, where 100vh would include the
     // browser chrome and push content off-screen (Bug A root cause).
-    <div className="relative w-full h-dvh bg-black overflow-hidden">
+    <div className="relative w-full h-dvh bg-[var(--theme-bg,#607A33)] overflow-hidden">
       {/* Video loop plays full-screen behind the modal */}
       <video
         ref={videoRef}

@@ -40,6 +40,7 @@ def get_booth_runtime_config() -> dict:
             "primary": CONFIG.theme.primary,
             "accent": CONFIG.theme.accent,
             "startCopy": CONFIG.theme.start_copy,
+            "background": CONFIG.theme.background,
         },
     }
 

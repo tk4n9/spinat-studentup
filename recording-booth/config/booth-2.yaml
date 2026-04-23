@@ -21,6 +21,7 @@ theme:
   # Start-button copy deliberately matches booth-1 (event-day operator intuition);
   # booth identity shown via footer suffix wired in US-005 (see plan commit 6).
   start_copy: "시작하기"
+  background: "#607A33"
 
 formats:
   - id: 1

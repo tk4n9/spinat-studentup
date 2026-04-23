@@ -49,5 +49,6 @@ export interface BoothConfig {
     primary: string;
     accent: string;
     startCopy: string;
+    background: string;
   };
 }

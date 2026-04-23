@@ -17,7 +17,7 @@ export default function CountdownScreen() {
   const scale = remaining >= 3 ? 'scale-100' : remaining === 2 ? 'scale-110' : 'scale-125';
 
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center bg-black gap-8">
+    <div className="w-full h-full flex flex-col items-center justify-center bg-[var(--theme-bg,#607A33)] gap-8">
       <p className="text-white/50 text-xl tracking-widest uppercase">준비하세요</p>
 
       <div

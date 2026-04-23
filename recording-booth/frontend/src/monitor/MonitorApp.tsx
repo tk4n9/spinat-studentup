@@ -28,7 +28,7 @@ export default function MonitorApp() {
   // Empty state
   if (videos.length === 0) {
     return (
-      <div className="w-screen h-screen bg-black flex flex-col items-center justify-center gap-6">
+      <div className="w-screen h-dvh bg-[var(--theme-bg,#607A33)] flex flex-col items-center justify-center gap-6">
         <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin" />
         <div className="text-center">
           <p className="text-white/50 text-lg">영상을 기다리는 중...</p>
@@ -40,7 +40,7 @@ export default function MonitorApp() {
   }
 
   return (
-    <div className="w-screen h-screen bg-black relative overflow-hidden">
+    <div className="w-screen h-dvh bg-[var(--theme-bg,#607A33)] relative overflow-hidden">
       {/* Main video player.
           `loop` when there's only one video — a single-element playlist
           can't advance (setIndex((0+1)%1)=0 is a no-op → effect never

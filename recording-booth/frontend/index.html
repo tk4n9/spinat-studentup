@@ -7,7 +7,10 @@
     <!-- Prevent context menu + text selection on kiosk touch screen -->
     <style>
       * { -webkit-tap-highlight-color: transparent; user-select: none; }
-      body { margin: 0; background: #000; overflow: hidden; }
+      /* Pre-mount background — must match theme.background in booth-*.yaml
+         so there is no black flash before React applies the CSS var. If
+         you change this, change all 4 YAMLs in the same commit. */
+      body { margin: 0; background: #607A33; overflow: hidden; }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

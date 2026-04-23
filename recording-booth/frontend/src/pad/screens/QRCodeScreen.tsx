@@ -13,7 +13,7 @@ export default function QRCodeScreen() {
   };
 
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center gap-8 px-8 bg-black">
+    <div className="w-full h-full flex flex-col items-center justify-center gap-8 px-8 bg-[var(--theme-bg,#607A33)]">
       <div className="text-center">
         <h2 className="text-white text-2xl font-black mb-1">영상 저장 완료!</h2>
         <p className="text-white/60 text-sm">

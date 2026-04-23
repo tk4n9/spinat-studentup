@@ -67,6 +67,10 @@ class ThemeSection(BaseModel):
     primary: str
     accent: str
     start_copy: str
+    # Page-level background. Default kept at pure black so YAMLs missing
+    # the field continue to load without validation error (back-compat
+    # for any downstream config not yet updated).
+    background: str = "#000000"
 
 
 class FormatSpec(BaseModel):
