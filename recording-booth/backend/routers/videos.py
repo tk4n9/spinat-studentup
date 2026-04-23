@@ -62,11 +62,19 @@ async def finalize_video(
         display_path = storage.move_to_display(path)
         _registry[video_id] = display_path
 
-        # Upload to R2 (non-blocking, best-effort)
+        # Upload to R2 (non-blocking, best-effort) using a DOWNSIZED
+        # sibling file. The monitor keeps display_path untouched at full
+        # 720p; the compact 540p variant exists only long enough to hit
+        # R2, then it's unlinked. This splits the two consumers'
+        # conflicting size/quality needs:
+        #   - monitor (big screen, local LAN)       → quality
+        #   - QR download (audience phone, cellular) → size
         if r2.is_configured():
+            compact_path = None
             try:
+                compact_path = await transcode.transcode_to_compact_mp4(display_path)
                 r2_url = await asyncio.wait_for(
-                    r2.upload_video(display_path, video_id),
+                    r2.upload_video(compact_path, video_id),
                     timeout=30.0,
                 )
                 _r2_urls[video_id] = r2_url
@@ -74,6 +82,16 @@ async def finalize_video(
             except Exception as exc:
                 logger.warning(f"R2 upload failed for {video_id}: {exc}")
                 r2_url = None
+            finally:
+                # Always clean up the compact temp file — R2 has its own
+                # copy now, and keeping .compact.mp4 next to the display
+                # mp4 would double-count in the monitor's ls-based
+                # playlist scan.
+                if compact_path is not None and compact_path.exists():
+                    try:
+                        compact_path.unlink()
+                    except OSError as exc:
+                        logger.warning(f"compact cleanup failed: {exc}")
         else:
             logger.warning("R2 not configured — QR code will not be available")
 
