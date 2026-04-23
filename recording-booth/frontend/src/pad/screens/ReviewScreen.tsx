@@ -75,65 +75,80 @@ export default function ReviewScreen() {
   };
 
   return (
-    <div className="w-full h-full flex flex-col bg-black">
-      {/* Video loop playback */}
-      <div className="flex-1 relative">
-        <video
-          ref={videoRef}
-          loop
-          playsInline
-          muted={false}
-          className="w-full h-full object-cover"
-          style={{ transform: 'scaleX(-1)' }}
-        />
-      </div>
+    // Full-bleed stage. h-dvh (dynamic viewport) guarantees the modal stays
+    // inside the visible area on iOS Safari, where 100vh would include the
+    // browser chrome and push content off-screen (Bug A root cause).
+    <div className="relative w-full h-dvh bg-black overflow-hidden">
+      {/* Video loop plays full-screen behind the modal */}
+      <video
+        ref={videoRef}
+        loop
+        playsInline
+        muted={false}
+        className="absolute inset-0 w-full h-full object-cover"
+        style={{ transform: 'scaleX(-1)' }}
+      />
 
-      {/* Bottom panel */}
-      <div className="bg-black/90 px-6 pt-4 pb-8 flex flex-col gap-4">
-        {/* Checkboxes */}
-        <div className="flex flex-col gap-3">
-          <label className="flex items-start gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={saveChecked}
-              onChange={(e) => setSaveChecked(e.target.checked)}
-              className="mt-1 w-5 h-5 rounded accent-white shrink-0"
-            />
-            <span className="text-white text-sm leading-snug">
-              <span className="font-bold">저장하시겠습니까?</span>
-              <br />
-              <span className="text-white/60 text-xs">
-                체크 시 QR코드로 영상을 받아보실 수 있으며, 앞쪽 모니터에 전시됩니다.
-              </span>
-            </span>
-          </label>
+      {/* Dim overlay for modal readability */}
+      <div className="absolute inset-0 bg-black/50 pointer-events-none" />
 
-          <label className="flex items-start gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={instaChecked}
-              onChange={(e) => setInstaChecked(e.target.checked)}
-              className="mt-1 w-5 h-5 rounded accent-white shrink-0"
-            />
-            <span className="text-white text-sm leading-snug">
-              <span className="font-bold">인스타그램 업로딩에 동의하십니까?</span>
-              <br />
-              <span className="text-white/60 text-xs">
-                체크 시 본 영상은 추후 @spinat.official에 업로드됩니다.
-              </span>
-            </span>
-          </label>
-        </div>
-
-        {/* Complete button */}
-        <button
-          onClick={handleComplete}
-          disabled={submitting}
-          className="w-full py-4 bg-white text-black text-xl font-black rounded-2xl
-                     active:scale-95 transition-transform disabled:opacity-50"
+      {/* Centered modal card — padding honors iPad home-indicator safe area */}
+      <div
+        className="absolute inset-0 flex items-center justify-center px-6"
+        style={{
+          paddingTop: 'env(safe-area-inset-top)',
+          paddingBottom: 'env(safe-area-inset-bottom)',
+        }}
+      >
+        <div
+          className="w-full max-w-md flex flex-col gap-5 rounded-2xl border border-white/10
+                     bg-black/70 backdrop-blur-md p-6 shadow-2xl"
         >
-          {submitting ? '처리 중...' : '완료'}
-        </button>
+          {/* Checkboxes */}
+          <div className="flex flex-col gap-4">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={saveChecked}
+                onChange={(e) => setSaveChecked(e.target.checked)}
+                className="mt-1 w-5 h-5 rounded accent-white shrink-0"
+              />
+              <span className="text-white text-sm leading-snug">
+                <span className="font-bold">저장하시겠습니까?</span>
+                <br />
+                <span className="text-white/70 text-xs">
+                  체크 시 QR코드로 영상을 받아보실 수 있으며, 앞쪽 모니터에 전시됩니다.
+                </span>
+              </span>
+            </label>
+
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={instaChecked}
+                onChange={(e) => setInstaChecked(e.target.checked)}
+                className="mt-1 w-5 h-5 rounded accent-white shrink-0"
+              />
+              <span className="text-white text-sm leading-snug">
+                <span className="font-bold">인스타그램 업로딩에 동의하십니까?</span>
+                <br />
+                <span className="text-white/70 text-xs">
+                  체크 시 본 영상은 추후 @spinat.official에 업로드됩니다.
+                </span>
+              </span>
+            </label>
+          </div>
+
+          {/* Complete button */}
+          <button
+            onClick={handleComplete}
+            disabled={submitting}
+            className="w-full py-4 bg-white text-black text-xl font-black rounded-2xl
+                       active:scale-95 transition-transform disabled:opacity-50"
+          >
+            {submitting ? '처리 중...' : '완료'}
+          </button>
+        </div>
       </div>
     </div>
   );
