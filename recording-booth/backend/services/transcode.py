@@ -43,21 +43,28 @@ _FASTSTART_FLAG = "+faststart"
 #                            libx264 preset=fast at 720p, and runs on
 #                            the media engine so all 4 concurrent
 #                            booths can finalize without CPU contention.
-#   -b:v 2M                : fixed 2 Mbps. VideoToolbox does not support
-#                            `-crf`; bitrate control is our knob. 2M at
-#                            720p lands around 1.8-2.5 MB per 20s clip —
-#                            small enough for cellular QR downloads,
-#                            still visually clean on the big monitor.
-#                            Initial show-1 pass used 5M which produced
-#                            5-6 MB files; dropped to 2M after the
-#                            operator flagged R2 objects as too large.
+#   -b:v 1M                : fixed 1 Mbps. VideoToolbox does not support
+#                            `-crf`; bitrate control is our knob. Real
+#                            20s clips from the booth land around 2.8 MB
+#                            at 1M (VBR overshoots the target for
+#                            high-motion content — this is the encoder
+#                            being honest about entropy, not a bug).
+#                            Size/quality ladder measured 2026-04-24:
+#                              5M target → ~5-6 MB actual
+#                              2M target → ~5 MB actual (overshoot)
+#                              1M target → ~2.8 MB actual  ← current
+#                            Operator A/B'd 2M / 1.5M / 1M on the big
+#                            monitor and accepted 1M; selfie-style
+#                            footage holds up at 720p/1M even projected
+#                            large, and the size win is substantial for
+#                            cellular QR downloads.
 #   -c:a aac / -b:a 128k   : unchanged — audio is cheap and the venue's
 #                            webm/opus source must be re-encoded to AAC
 #                            for MP4 compatibility regardless.
 # Resolution is not scaled — 720p preserved for the big monitor.
 _TRANSCODE_ARGS = [
     "-c:v", "h264_videotoolbox",
-    "-b:v", "2M",
+    "-b:v", "1M",
     "-c:a", "aac",
     "-b:a", "128k",
     "-movflags", _FASTSTART_FLAG,
