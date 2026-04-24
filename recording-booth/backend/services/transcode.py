@@ -67,28 +67,6 @@ _REMUX_ARGS = [
     "-y",
 ]
 
-# Compact encode args — used for the R2 upload variant only. The
-# monitor/display file keeps full 720p via _TRANSCODE_ARGS; this second
-# pass produces a phone-friendly ~1.5-2 MB version for QR-code download:
-#   - scale=-2:540  : 720p → 540p (short-edge 540, preserve aspect,
-#                     -2 = round to even width for libx264 compatibility).
-#   - crf 30        : more aggressive than the display's crf 28.
-#   - audio 96k     : 128k → 96k. Borderline perceptible on headphones,
-#                     fine on phone speakers.
-# Input is the already-transcoded display MP4, so we re-encode from
-# H.264 (not WebM) — slightly cheaper than a fresh WebM decode.
-_COMPACT_ARGS = [
-    "-c:v", "libx264",
-    "-preset", "fast",
-    "-crf", "30",
-    "-r", "30",
-    "-vf", "scale=-2:540",
-    "-c:a", "aac",
-    "-b:a", "96k",
-    "-movflags", _FASTSTART_FLAG,
-    "-y",
-]
-
 # Safety cap. A 30s clip transcodes in ~3.4s on M1; 60s leaves plenty
 # of headroom for the venue laptop without letting a runaway ffmpeg
 # stall the finalize request indefinitely.
@@ -165,52 +143,4 @@ async def transcode_to_faststart_mp4(src: Path) -> Path:
             logger.warning(f"[transcode] failed to delete source {src}: {exc}")
 
     logger.info(f"[transcode] done: {dst.name}")
-    return dst
-
-
-async def transcode_to_compact_mp4(src: Path) -> Path:
-    """
-    Produce a downsized sibling MP4 for R2 upload / QR-download.
-
-    Unlike transcode_to_faststart_mp4, this function does NOT delete the
-    source — the caller (finalize route) needs the high-quality original
-    to stay put for the monitor and the instagram copy. The compact
-    output sits at `{src.parent}/{src.stem}.compact.mp4` and is the
-    caller's responsibility to unlink once it has been uploaded.
-
-    Raises:
-      RuntimeError on ffmpeg failure (non-zero exit, timeout, or if
-      ffmpeg is not installed on PATH).
-    """
-    dst = src.parent / f"{src.stem}.compact.mp4"
-    args = ["ffmpeg", "-i", str(src), *_COMPACT_ARGS, str(dst)]
-
-    logger.info(f"[transcode] compact: {src.name} → {dst.name}")
-
-    try:
-        proc = await asyncio.create_subprocess_exec(
-            *args,
-            stdout=asyncio.subprocess.DEVNULL,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        try:
-            _stdout, stderr = await asyncio.wait_for(
-                proc.communicate(), timeout=_TIMEOUT_SECONDS
-            )
-        except asyncio.TimeoutError:
-            proc.kill()
-            await proc.wait()
-            raise RuntimeError(
-                f"ffmpeg compact timed out after {_TIMEOUT_SECONDS}s on {src.name}"
-            )
-    except FileNotFoundError as exc:
-        raise RuntimeError("ffmpeg not found on PATH — install via `brew install ffmpeg`") from exc
-
-    if proc.returncode != 0:
-        tail = (stderr.decode("utf-8", errors="replace") if stderr else "")[-800:]
-        raise RuntimeError(
-            f"ffmpeg compact exit {proc.returncode} on {src.name}: {tail}"
-        )
-
-    logger.info(f"[transcode] compact done: {dst.name}")
     return dst

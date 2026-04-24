@@ -102,15 +102,5 @@ def _mock_external_side_effects(monkeypatch: pytest.MonkeyPatch) -> None:
             src.rename(dst)
         return dst
 
-    async def _fake_compact(src: Path) -> Path:
-        # Simulate compact variant by writing a tiny sibling file. The
-        # finalize route unlinks this in its `finally` block after the
-        # (mocked) R2 upload, so it must actually exist on disk or the
-        # cleanup path would silently skip.
-        dst = src.parent / f"{src.stem}.compact.mp4"
-        dst.write_bytes(b"fake-compact")
-        return dst
-
     monkeypatch.setattr(r2_mod, "upload_video", _fake_upload_video)
     monkeypatch.setattr(transcode_mod, "transcode_to_faststart_mp4", _fake_transcode)
-    monkeypatch.setattr(transcode_mod, "transcode_to_compact_mp4", _fake_compact)
