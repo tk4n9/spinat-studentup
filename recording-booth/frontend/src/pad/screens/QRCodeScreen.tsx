@@ -1,5 +1,15 @@
+import { useEffect } from 'react';
 import { useSessionStore } from '../store/sessionStore';
 import { QRCodeSVG } from 'qrcode.react';
+
+// Audience grabs the QR, walks off, and the pad is left sitting on this
+// screen until an operator manually hits "다시시작". During the 2026-04-24
+// show that meant idle booths piled up while the next challenger was
+// waiting behind the curtain. Auto-reset after 2 minutes returns the pad
+// to StartScreen without operator intervention. 2 min is long enough to
+// scan + open the link on a phone, short enough that the next person
+// isn't stuck waiting.
+const QR_AUTO_RESET_MS = 120_000;
 
 export default function QRCodeScreen() {
   const { r2Url, setScreen, reset } = useSessionStore((s) => ({
@@ -7,6 +17,14 @@ export default function QRCodeScreen() {
     setScreen: s.setScreen,
     reset: s.reset,
   }));
+
+  // Auto-return to StartScreen after the idle window. Cleanup covers the
+  // case where the operator taps "다시시작" first — the timer is cancelled
+  // before `reset()` fires, so we don't double-dispatch.
+  useEffect(() => {
+    const t = setTimeout(() => reset(), QR_AUTO_RESET_MS);
+    return () => clearTimeout(t);
+  }, [reset]);
 
   const handleRestart = () => {
     reset();
