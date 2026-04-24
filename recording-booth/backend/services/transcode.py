@@ -43,18 +43,21 @@ _FASTSTART_FLAG = "+faststart"
 #                            libx264 preset=fast at 720p, and runs on
 #                            the media engine so all 4 concurrent
 #                            booths can finalize without CPU contention.
-#   -b:v 5M                : fixed 5 Mbps. VideoToolbox does not support
-#                            `-crf`; bitrate control is our knob. 5M at
-#                            720p lands around 5-6 MB per 20s clip,
-#                            which the operator accepted as fine given
-#                            R2 egress isn't a bottleneck.
+#   -b:v 2M                : fixed 2 Mbps. VideoToolbox does not support
+#                            `-crf`; bitrate control is our knob. 2M at
+#                            720p lands around 1.8-2.5 MB per 20s clip —
+#                            small enough for cellular QR downloads,
+#                            still visually clean on the big monitor.
+#                            Initial show-1 pass used 5M which produced
+#                            5-6 MB files; dropped to 2M after the
+#                            operator flagged R2 objects as too large.
 #   -c:a aac / -b:a 128k   : unchanged — audio is cheap and the venue's
 #                            webm/opus source must be re-encoded to AAC
 #                            for MP4 compatibility regardless.
 # Resolution is not scaled — 720p preserved for the big monitor.
 _TRANSCODE_ARGS = [
     "-c:v", "h264_videotoolbox",
-    "-b:v", "5M",
+    "-b:v", "2M",
     "-c:a", "aac",
     "-b:a", "128k",
     "-movflags", _FASTSTART_FLAG,
