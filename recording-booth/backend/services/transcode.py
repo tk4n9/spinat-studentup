@@ -14,9 +14,10 @@ canonical output format — H.264 + AAC MP4 with `+faststart` — so the
 `moov` atom sits at the front of the file and browsers can begin
 streaming before the download completes.
 
-Performance budget: measured 3.4s wall-clock on M1 for a 30s 720p WebM
-using `-preset veryfast -crf 23`. A 60s asyncio timeout gives headroom
-for the weaker venue MacBook + occasional bursts.
+Performance budget: hardware H.264 encoding via `h264_videotoolbox`
+finishes a 20s 720p clip in ~0.5-1s on Apple Silicon. A 120s asyncio
+timeout gives headroom for concurrent-booth contention at the venue
+without letting a genuinely stuck ffmpeg hang finalize forever.
 """
 from __future__ import annotations
 
@@ -33,26 +34,27 @@ _FASTSTART_FLAG = "+faststart"
 # Full transcode args — used when input is WebM (or any format that
 # needs codec conversion).
 #
-# Tuned 2026-04-24 after observing 5-6 MB per 20-second clip on the
-# venue pipeline — too heavy for QR-triggered phone downloads over
-# cellular. New preset targets ~2-2.7 MB at still-acceptable visual
-# quality for the monitor showcase:
-#   -preset fast   : ~10% smaller than veryfast at same CRF, ~30% more
-#                    CPU — still well under the 60s timeout.
-#   -crf 28        : ~45% smaller than CRF 23. Slight softening, not
-#                    noticeable on a phone screen during reel playback.
-#   -r 30          : caps at 30fps. iPhone back cameras default to 30
-#                    anyway; this only kicks in if a device recorded at
-#                    60fps, in which case dropping half the frames saves
-#                    ~30-40% with no perceptible motion loss for the
-#                    stationary selfie-style shots we capture.
-# Resolution is NOT scaled — 720p is kept so the big monitor stays
-# crisp. Size savings come from codec tuning, not pixel count.
+# Tuned 2026-04-24 evening (rehearsal → show 1 postmortem): 4 booths
+# finalizing concurrently saturated the venue M-series CPU with
+# libx264 (software encoder), stretching finalize to 5-7s per clip
+# and creating visible "처리 중" queuing. Switched to Apple Silicon's
+# dedicated media engine via `h264_videotoolbox`:
+#   -c:v h264_videotoolbox : hardware encode, ~5-10× faster than
+#                            libx264 preset=fast at 720p, and runs on
+#                            the media engine so all 4 concurrent
+#                            booths can finalize without CPU contention.
+#   -b:v 5M                : fixed 5 Mbps. VideoToolbox does not support
+#                            `-crf`; bitrate control is our knob. 5M at
+#                            720p lands around 5-6 MB per 20s clip,
+#                            which the operator accepted as fine given
+#                            R2 egress isn't a bottleneck.
+#   -c:a aac / -b:a 128k   : unchanged — audio is cheap and the venue's
+#                            webm/opus source must be re-encoded to AAC
+#                            for MP4 compatibility regardless.
+# Resolution is not scaled — 720p preserved for the big monitor.
 _TRANSCODE_ARGS = [
-    "-c:v", "libx264",
-    "-preset", "fast",
-    "-crf", "28",
-    "-r", "30",
+    "-c:v", "h264_videotoolbox",
+    "-b:v", "5M",
     "-c:a", "aac",
     "-b:a", "128k",
     "-movflags", _FASTSTART_FLAG,
@@ -67,10 +69,14 @@ _REMUX_ARGS = [
     "-y",
 ]
 
-# Safety cap. A 30s clip transcodes in ~3.4s on M1; 60s leaves plenty
-# of headroom for the venue laptop without letting a runaway ffmpeg
-# stall the finalize request indefinitely.
-_TIMEOUT_SECONDS = 60.0
+# Safety cap. VideoToolbox encodes a 20s 720p clip in ~0.5-1s; the
+# dominant delay here is the subprocess + fs roundtrip, not encoding.
+# Bumped 60 → 120 after the 2026-04-24 show observed concurrent-booth
+# finalize stretching past 30s when 4 uvicorn workers shared the media
+# engine and network at once. 120s is still a hard stop for a genuinely
+# stuck ffmpeg, just with enough headroom that legitimate burst load
+# never trips it.
+_TIMEOUT_SECONDS = 120.0
 
 
 async def transcode_to_faststart_mp4(src: Path) -> Path:
